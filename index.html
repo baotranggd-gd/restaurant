@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hệ Thống Quản Lý & Thiết Kế Bàn Nhà Hàng</title>
+  <title>Hệ Thống Quản Lý Nhà Hàng</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons -->
@@ -50,7 +50,7 @@
       </nav>
     </div>
     <div class="p-4 border-t border-slate-800 text-xs text-gray-500">
-      Restaurant POS v2.0 &bull; 2026
+      Restaurant POS v2.1 &bull; 2026
     </div>
   </aside>
 
@@ -62,10 +62,10 @@
       <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
         <div>
           <h2 class="text-2xl font-bold text-gray-900">Sơ đồ bàn phục vụ</h2>
-          <p class="text-sm text-gray-500">Bật chế độ thiết kế để thêm, xóa bàn và phân chia khu vực</p>
+          <p class="text-sm text-gray-500">Chọn bàn để tạo đơn, phục vụ hoặc thanh toán</p>
         </div>
         
-        <!-- Thanh công cụ Thiết Kế Bàn & Khu Vực (Admin/Manager) -->
+        <!-- Thanh công cụ Thiết Kế Bàn & Khu Vực -->
         <div class="flex items-center gap-2 admin-manager-only">
           <button onclick="toggleDesignMode()" id="btn-toggle-design" class="px-3.5 py-2 text-xs font-bold rounded-lg border border-slate-700 bg-white text-slate-800 flex items-center gap-1.5 shadow-sm hover:bg-gray-50">
             <i class="ph ph-wrench"></i> Chế độ thiết kế: <span id="design-status-text" class="text-gray-500">Tắt</span>
@@ -82,9 +82,7 @@
       </div>
 
       <!-- Bộ lọc khu vực -->
-      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1" id="zone-filter-container">
-        <!-- Render danh sách khu vực động -->
-      </div>
+      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1" id="zone-filter-container"></div>
 
       <!-- Legend Chú thích trạng thái -->
       <div class="flex items-center gap-4 text-xs mb-4 text-gray-600 bg-white p-3 rounded-lg border">
@@ -95,9 +93,7 @@
       </div>
 
       <!-- Grid Bàn -->
-      <div id="table-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        <!-- Render bằng JS -->
-      </div>
+      <div id="table-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
     </section>
 
     <!-- MÀN HÌNH 2: TẠO / XỬ LÝ ORDER (Split-Screen) -->
@@ -120,13 +116,16 @@
       <!-- Cột Order Ticket Phải (40%) -->
       <div class="w-5/12 bg-gray-50 flex flex-col h-full justify-between">
         <div class="p-4 border-b bg-white flex justify-between items-center">
-          <span class="font-bold text-sm">Danh sách món đã gọi</span>
+          <div>
+            <span class="font-bold text-sm block">Danh sách món đã gọi</span>
+            <span class="text-[11px] text-indigo-600 font-semibold" id="order-screen-guests">Khách: 2 người</span>
+          </div>
           <span class="text-xs text-gray-500" id="active-order-id">#ORD-NEW</span>
         </div>
         <div class="flex-1 overflow-y-auto p-4 space-y-3" id="order-ticket-items"></div>
         <div class="p-4 bg-white border-t space-y-3">
           <div class="flex justify-between text-base font-bold text-gray-900">
-            <span>Tạm tính:</span>
+            <span>Tổng tiền:</span>
             <span id="order-ticket-total">0 ₫</span>
           </div>
           <div class="grid grid-cols-2 gap-2">
@@ -145,24 +144,20 @@
       </div>
     </section>
 
-    <!-- MÀN HÌNH 3: BÁO CÁO DOANH THU -->
+    <!-- MÀN HÌNH 3: BÁO CÁO DOANH THU (ĐÃ BỎ TIPS) -->
     <section id="tab-reports" class="hidden p-6">
       <h2 class="text-2xl font-bold mb-4">Báo cáo hoạt động kinh doanh</h2>
-      <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="grid grid-cols-3 gap-4 mb-6">
         <div class="bg-white p-4 rounded-xl border shadow-sm">
-          <div class="text-xs text-gray-500 font-medium">Doanh thu hôm nay</div>
+          <div class="text-xs text-gray-500 font-medium">Tổng doanh thu hôm nay</div>
           <div class="text-xl font-bold text-gray-900 mt-1" id="report-revenue">0 ₫</div>
         </div>
         <div class="bg-white p-4 rounded-xl border shadow-sm">
-          <div class="text-xs text-gray-500 font-medium">Tổng số đơn</div>
+          <div class="text-xs text-gray-500 font-medium">Tổng số đơn hoàn thành</div>
           <div class="text-xl font-bold text-gray-900 mt-1" id="report-orders">0</div>
         </div>
         <div class="bg-white p-4 rounded-xl border shadow-sm">
-          <div class="text-xs text-gray-500 font-medium">Tiền Tip nhận được</div>
-          <div class="text-xl font-bold text-amber-600 mt-1" id="report-tips">0 ₫</div>
-        </div>
-        <div class="bg-white p-4 rounded-xl border shadow-sm">
-          <div class="text-xs text-gray-500 font-medium">Giá trị đơn TB</div>
+          <div class="text-xs text-gray-500 font-medium">Giá trị đơn trung bình</div>
           <div class="text-xl font-bold text-blue-600 mt-1" id="report-avg">0 ₫</div>
         </div>
       </div>
@@ -173,10 +168,10 @@
             <tr class="border-b bg-gray-50 text-gray-600">
               <th class="p-2.5">Mã đơn</th>
               <th class="p-2.5">Bàn</th>
+              <th class="p-2.5">Số khách</th>
               <th class="p-2.5">Thời gian</th>
               <th class="p-2.5">Hình thức</th>
-              <th class="p-2.5">Tip</th>
-              <th class="p-2.5 text-right">Tổng thanh toán</th>
+              <th class="p-2.5 text-right">Tổng tiền</th>
             </tr>
           </thead>
           <tbody id="completed-orders-table"></tbody>
@@ -234,6 +229,30 @@
 
   </main>
 
+  <!-- MODAL: CHỌN SỐ LƯỢNG KHÁCH TRƯỚC KHI TẠO ORDER -->
+  <div id="modal-select-guests" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-base text-gray-900" id="guest-modal-table-title">Mở bàn & Tạo Order</h3>
+        <button onclick="closeModal('modal-select-guests')" class="text-gray-400 hover:text-gray-600">&times;</button>
+      </div>
+      <div>
+        <label class="text-xs text-gray-600 block mb-1">Số lượng khách vào bàn:</label>
+        <div class="flex items-center gap-3">
+          <button onclick="adjustGuestCount(-1)" class="w-10 h-10 border rounded-lg font-bold text-lg hover:bg-gray-100">-</button>
+          <input type="number" id="input-guest-count" value="2" min="1" max="50" class="flex-1 border rounded-lg p-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          <button onclick="adjustGuestCount(1)" class="w-10 h-10 border rounded-lg font-bold text-lg hover:bg-gray-100">+</button>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('modal-select-guests')" class="px-3 py-1.5 text-xs border rounded-lg">Hủy</button>
+        <button onclick="confirmCreateOrderWithGuests()" class="px-4 py-2 text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg flex items-center gap-1">
+          <i class="ph ph-check-circle"></i> Bắt đầu gọi món
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: THÊM KHU VỰC MỚI -->
   <div id="modal-add-area" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4">
@@ -281,32 +300,27 @@
     </div>
   </div>
 
-  <!-- MODAL THANH TOÁN (CHECKOUT) -->
+  <!-- MODAL THANH TOÁN (CHECKOUT - ĐÃ BỎ TIPS HOÀN TOÀN) -->
   <div id="modal-checkout" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
         <h3 class="font-bold text-lg">Thanh toán hoá đơn</h3>
         <button onclick="closeModal('modal-checkout')" class="text-gray-400 hover:text-gray-600">&times;</button>
       </div>
-      <div class="space-y-2 text-sm">
-        <div class="flex justify-between">
-          <span class="text-gray-500">Tiền món:</span>
-          <span class="font-bold" id="bill-subtotal">0 ₫</span>
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between items-center text-gray-500">
+          <span>Bàn thanh toán:</span>
+          <span class="font-bold text-gray-800" id="checkout-table-info">Bàn 01</span>
         </div>
-        <div>
-          <label class="text-xs text-gray-500 block mb-1">Tiền Tip cho nhân viên:</label>
-          <div class="grid grid-cols-4 gap-1">
-            <button onclick="setTip(0)" class="tip-btn text-xs border rounded py-1.5 bg-gray-100 font-medium">0%</button>
-            <button onclick="setTip(0.05)" class="tip-btn text-xs border rounded py-1.5 font-medium">5%</button>
-            <button onclick="setTip(0.10)" class="tip-btn text-xs border rounded py-1.5 font-medium">10%</button>
-            <button onclick="setTip(0.15)" class="tip-btn text-xs border rounded py-1.5 font-medium">15%</button>
-          </div>
+        <div class="flex justify-between items-center text-gray-500">
+          <span>Số khách phục vụ:</span>
+          <span class="font-bold text-gray-800" id="checkout-guests-info">2 người</span>
         </div>
-        <div class="flex justify-between pt-2 border-t text-base font-bold text-gray-900">
-          <span>Tổng thanh toán:</span>
+        <div class="flex justify-between pt-3 border-t text-lg font-bold text-gray-900">
+          <span>Tổng số tiền:</span>
           <span class="text-emerald-600" id="bill-total">0 ₫</span>
         </div>
-        <div>
+        <div class="pt-2">
           <label class="text-xs text-gray-500 block mb-1">Phương thức thanh toán:</label>
           <div class="grid grid-cols-2 gap-2">
             <label class="flex items-center gap-2 border p-2 rounded cursor-pointer hover:bg-gray-50 text-xs">
@@ -321,7 +335,7 @@
         </div>
       </div>
       <button onclick="confirmPayment()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm">
-        Hoàn tất thanh toán & Giải phóng bàn
+        Xác nhận thu tiền & Giải phóng bàn
       </button>
     </div>
   </div>
@@ -348,15 +362,15 @@
     let isDesignMode = false;
     let currentFilterZone = 'all';
     let activeTableId = null;
-    let currentTipRate = 0;
+    let pendingCreateOrderTableId = null;
 
     const defaultZones = ['Tầng 1', 'Tầng 2', 'VIP'];
     const defaultTables = [
       { id: 1, name: 'Bàn 01', zone: 'Tầng 1', capacity: 4, status: 'Trống', order: null },
-      { id: 2, name: 'Bàn 02', zone: 'Tầng 1', capacity: 4, status: 'Đang phục vụ', order: { id: 'ORD-101', items: [{ id: 1, qty: 1, note: 'Medium rare' }, { id: 7, qty: 2, note: 'Ít đường' }], startTime: '18:10' } },
-      { id: 3, name: 'Bàn 03', zone: 'Tầng 1', capacity: 2, status: 'Đã Order', order: { id: 'ORD-102', items: [{ id: 3, qty: 2, note: '' }], startTime: '18:25' } },
+      { id: 2, name: 'Bàn 02', zone: 'Tầng 1', capacity: 4, status: 'Đang phục vụ', order: { id: 'ORD-101', guests: 3, items: [{ id: 1, qty: 1, note: 'Medium rare' }, { id: 7, qty: 2, note: 'Ít đường' }], startTime: '18:10' } },
+      { id: 3, name: 'Bàn 03', zone: 'Tầng 1', capacity: 2, status: 'Đã Order', order: { id: 'ORD-102', guests: 2, items: [{ id: 3, qty: 2, note: '' }], startTime: '18:25' } },
       { id: 4, name: 'Bàn 04', zone: 'Tầng 2', capacity: 6, status: 'Trống', order: null },
-      { id: 5, name: 'Bàn 05', zone: 'Tầng 2', capacity: 6, status: 'Chờ thanh toán', order: { id: 'ORD-098', items: [{ id: 2, qty: 2, note: '' }, { id: 6, qty: 2, note: '' }], startTime: '17:40' } },
+      { id: 5, name: 'Bàn 05', zone: 'Tầng 2', capacity: 6, status: 'Chờ thanh toán', order: { id: 'ORD-098', guests: 4, items: [{ id: 2, qty: 2, note: '' }, { id: 6, qty: 2, note: '' }], startTime: '17:40' } },
       { id: 6, name: 'Phòng VIP 1', zone: 'VIP', capacity: 10, status: 'Trống', order: null }
     ];
 
@@ -376,7 +390,6 @@
 
     let orderHistory = [];
 
-    // Persist helper
     function saveState() {
       localStorage.setItem('restaurant_zones', JSON.stringify(zones));
       localStorage.setItem('restaurant_tables', JSON.stringify(tables));
@@ -403,7 +416,7 @@
     function changeRole(role) {
       currentRole = role;
       if (currentRole === 'Staff' && isDesignMode) {
-        toggleDesignMode(); // Tắt chế độ thiết kế nếu hạ quyền về Staff
+        toggleDesignMode();
       }
       applyRolePermissions();
     }
@@ -420,7 +433,7 @@
       });
     }
 
-    // 3. KHU VỰC & THIẾT KẾ BÀN (DESIGN FEATURES)
+    // 3. THIẾT KẾ BÀN & KHU VỰC
     function toggleDesignMode() {
       isDesignMode = !isDesignMode;
       const statusText = document.getElementById('design-status-text');
@@ -446,14 +459,12 @@
       const container = document.getElementById('zone-filter-container');
       container.innerHTML = '';
 
-      // Nút Tất cả
       const allBtn = document.createElement('button');
       allBtn.className = `px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 ${currentFilterZone === 'all' ? 'bg-gray-900 text-white' : 'bg-white border text-gray-700'}`;
       allBtn.innerText = 'Tất cả';
       allBtn.onclick = () => filterZone('all');
       container.appendChild(allBtn);
 
-      // Render từng khu vực
       zones.forEach(zone => {
         const wrap = document.createElement('div');
         wrap.className = 'flex items-center shrink-0';
@@ -464,7 +475,6 @@
         btn.onclick = () => filterZone(zone);
         wrap.appendChild(btn);
 
-        // Nút xóa khu vực khi ở chế độ thiết kế
         if (isDesignMode) {
           const delBtn = document.createElement('button');
           delBtn.className = 'bg-red-50 border border-l-0 border-red-200 text-red-600 hover:bg-red-100 px-2 py-1.5 rounded-r-full text-xs';
@@ -511,7 +521,7 @@
     function deleteZone(zoneName) {
       const hasTables = tables.some(t => t.zone === zoneName);
       if (hasTables) {
-        alert(`Khu vực "${zoneName}" đang có bàn trực thuộc. Vui lòng chuyển hoặc xóa hết bàn trong khu vực này trước!`);
+        alert(`Khu vực "${zoneName}" đang có bàn trực thuộc. Vui lòng chuyển hoặc xóa bàn trước!`);
         return;
       }
       if (confirm(`Bạn có chắc muốn xóa khu vực "${zoneName}"?`)) {
@@ -532,7 +542,6 @@
       document.getElementById('input-table-id').value = '';
       document.getElementById('input-table-name').value = `Bàn 0${tables.length + 1}`;
       document.getElementById('input-table-capacity').value = 4;
-
       populateZoneDropdown();
       document.getElementById('modal-table-form').classList.remove('hidden');
     }
@@ -545,7 +554,6 @@
       document.getElementById('input-table-id').value = table.id;
       document.getElementById('input-table-name').value = table.name;
       document.getElementById('input-table-capacity').value = table.capacity;
-
       populateZoneDropdown(table.zone);
       document.getElementById('modal-table-form').classList.remove('hidden');
     }
@@ -567,13 +575,11 @@
       }
 
       if (idInput) {
-        // Cập nhật bàn
         const table = tables.find(t => t.id === parseInt(idInput));
         table.name = name;
         table.zone = zone;
         table.capacity = capacity;
       } else {
-        // Thêm bàn mới
         const newTable = {
           id: Date.now(),
           name: name,
@@ -627,7 +633,9 @@
         if (t.status === 'Chờ thanh toán') badgeClass = 'badge-billing';
 
         let totalAmount = 0;
+        let guestCountDisplay = `${t.capacity} chỗ`;
         if (t.order) {
+          guestCountDisplay = `${t.order.guests || 2} khách (tối đa ${t.capacity})`;
           totalAmount = t.order.items.reduce((sum, it) => {
             const m = menuItems.find(m => m.id === it.id);
             return sum + (m ? m.price * it.qty : 0);
@@ -640,7 +648,7 @@
         }`;
 
         if (!isDesignMode) {
-          card.onclick = () => openTableOrder(t.id);
+          card.onclick = () => handleTableClick(t.id);
         }
 
         card.innerHTML = `
@@ -650,7 +658,7 @@
               <span class="text-xs px-2 py-0.5 rounded-full border ${badgeClass} font-medium">${t.status}</span>
             </div>
             <div class="text-xs text-gray-500 mb-2">
-              <i class="ph ph-users"></i> ${t.capacity} chỗ &bull; <span class="text-indigo-600 font-semibold">${t.zone}</span>
+              <i class="ph ph-users"></i> ${guestCountDisplay} &bull; <span class="text-indigo-600 font-semibold">${t.zone}</span>
             </div>
           </div>
 
@@ -678,19 +686,51 @@
       });
     }
 
-    // 5. ORDERING LOGIC
+    // 5. FLOW TẠO ORDER BẮT BUỘC CHỌN SỐ KHÁCH
+    function handleTableClick(tableId) {
+      const t = tables.find(x => x.id === tableId);
+      if (!t.order) {
+        // Bàn trống: Bắt buộc mở modal chọn số khách
+        pendingCreateOrderTableId = tableId;
+        document.getElementById('guest-modal-table-title').innerText = `Mở ${t.name} - Nhập số khách`;
+        document.getElementById('input-guest-count').value = Math.min(2, t.capacity);
+        document.getElementById('modal-select-guests').classList.remove('hidden');
+      } else {
+        // Bàn đã có order: Vào trực tiếp màn hình xử lý order
+        openTableOrder(tableId);
+      }
+    }
+
+    function adjustGuestCount(delta) {
+      const input = document.getElementById('input-guest-count');
+      let val = (parseInt(input.value) || 1) + delta;
+      if (val < 1) val = 1;
+      input.value = val;
+    }
+
+    function confirmCreateOrderWithGuests() {
+      const guests = parseInt(document.getElementById('input-guest-count').value) || 1;
+      const t = tables.find(x => x.id === pendingCreateOrderTableId);
+      
+      t.order = {
+        id: `ORD-${Math.floor(100 + Math.random() * 900)}`,
+        guests: guests,
+        items: [],
+        startTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      closeModal('modal-select-guests');
+      saveState();
+      openTableOrder(pendingCreateOrderTableId);
+    }
+
     function openTableOrder(tableId) {
       activeTableId = tableId;
       const t = tables.find(x => x.id === tableId);
-      if (!t.order) {
-        t.order = {
-          id: `ORD-${Math.floor(100 + Math.random() * 900)}`,
-          items: [],
-          startTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-      }
+
       document.getElementById('order-screen-table-title').innerText = `${t.name} (${t.status})`;
-      document.getElementById('order-screen-zone').innerText = `Khu vực: ${t.zone} | Sức chứa: ${t.capacity} pax`;
+      document.getElementById('order-screen-zone').innerText = `Khu vực: ${t.zone} | Sức chứa tối đa: ${t.capacity} chỗ`;
+      document.getElementById('order-screen-guests').innerText = `Khách: ${t.order.guests || 2} người`;
       document.getElementById('active-order-id').innerText = `#${t.order.id}`;
 
       renderMenuCategories();
@@ -806,7 +846,7 @@
         routing[m.kitchen].push(`${m.name} x${it.qty} ${it.note ? `(${it.note})` : ''}`);
       });
 
-      let summary = `ĐÃ GỬI BẾP THÀNH CÔNG CHO ${t.name}:\n`;
+      let summary = `ĐÃ GỬI BẾP CHO ${t.name} (${t.order.guests} khách):\n`;
       for (const [k, items] of Object.entries(routing)) {
         if (items.length > 0) summary += `\n[${k}]:\n - ` + items.join('\n - ');
       }
@@ -847,7 +887,7 @@
       switchTab('dashboard');
     }
 
-    // 7. THANH TOÁN
+    // 7. THANH TOÁN (HOÀN TOÀN BỎ TIPS)
     function openCheckoutModal() {
       const t = tables.find(x => x.id === activeTableId);
       if (!t.order || t.order.items.length === 0) {
@@ -855,46 +895,34 @@
         return;
       }
       t.status = 'Chờ thanh toán';
-      currentTipRate = 0;
-      updateCheckoutCalculation();
-      document.getElementById('modal-checkout').classList.remove('hidden');
-    }
 
-    function setTip(rate) {
-      currentTipRate = rate;
-      updateCheckoutCalculation();
-    }
-
-    function updateCheckoutCalculation() {
-      const t = tables.find(x => x.id === activeTableId);
-      const subtotal = t.order.items.reduce((sum, it) => {
+      const total = t.order.items.reduce((sum, it) => {
         const m = menuItems.find(x => x.id === it.id);
         return sum + (m.price * it.qty);
       }, 0);
 
-      const tipAmount = subtotal * currentTipRate;
-      const total = subtotal + tipAmount;
+      document.getElementById('checkout-table-info').innerText = `${t.name} (${t.zone})`;
+      document.getElementById('checkout-guests-info').innerText = `${t.order.guests || 2} người`;
+      document.getElementById('bill-total').innerText = `${total.toLocaleString('vi-VN')} ₫`;
 
-      document.getElementById('bill-subtotal').innerText = `${subtotal.toLocaleString('vi-VN')} ₫`;
-      document.getElementById('bill-total').innerText = `${total.toLocaleString('vi-VN')} ₫ (Tip: ${tipAmount.toLocaleString('vi-VN')} ₫)`;
+      document.getElementById('modal-checkout').classList.remove('hidden');
     }
 
     function confirmPayment() {
       const t = tables.find(x => x.id === activeTableId);
-      const subtotal = t.order.items.reduce((sum, it) => {
+      const total = t.order.items.reduce((sum, it) => {
         const m = menuItems.find(x => x.id === it.id);
         return sum + (m.price * it.qty);
       }, 0);
-      const tipAmount = subtotal * currentTipRate;
       const method = document.querySelector('input[name="payment_method"]:checked').value;
 
       orderHistory.push({
         orderId: t.order.id,
         tableName: t.name,
+        guests: t.order.guests || 2,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         method: method,
-        tip: tipAmount,
-        total: subtotal + tipAmount
+        total: total
       });
 
       t.order = null;
@@ -902,7 +930,7 @@
 
       saveState();
       closeModal('modal-checkout');
-      alert('Thanh toán thành công! Bàn đã được đưa về trạng thái Trống.');
+      alert('Thanh toán thành công! Bàn đã trở lại trạng thái Trống.');
       updateReports();
       switchTab('dashboard');
     }
@@ -917,16 +945,14 @@
       }
     }
 
-    // 8. BÁO CÁO & MENU MANAGEMENT
+    // 8. BÁO CÁO (ĐÃ BỎ TIPS)
     function updateReports() {
       const totalRev = orderHistory.reduce((sum, o) => sum + o.total, 0);
-      const totalTips = orderHistory.reduce((sum, o) => sum + o.tip, 0);
       const totalOrders = orderHistory.length;
       const avgRev = totalOrders > 0 ? totalRev / totalOrders : 0;
 
       document.getElementById('report-revenue').innerText = `${totalRev.toLocaleString('vi-VN')} ₫`;
       document.getElementById('report-orders').innerText = totalOrders;
-      document.getElementById('report-tips').innerText = `${totalTips.toLocaleString('vi-VN')} ₫`;
       document.getElementById('report-avg').innerText = `${Math.round(avgRev).toLocaleString('vi-VN')} ₫`;
 
       const tbody = document.getElementById('completed-orders-table');
@@ -934,14 +960,15 @@
         <tr class="border-b">
           <td class="p-2.5 font-bold">${o.orderId}</td>
           <td class="p-2.5">${o.tableName}</td>
+          <td class="p-2.5 text-indigo-600 font-semibold">${o.guests} pax</td>
           <td class="p-2.5 text-gray-500">${o.time}</td>
           <td class="p-2.5">${o.method}</td>
-          <td class="p-2.5 text-amber-600 font-semibold">${o.tip.toLocaleString('vi-VN')} ₫</td>
-          <td class="p-2.5 text-right font-bold">${o.total.toLocaleString('vi-VN')} ₫</td>
+          <td class="p-2.5 text-right font-bold text-gray-900">${o.total.toLocaleString('vi-VN')} ₫</td>
         </tr>
       `).join('');
     }
 
+    // 9. MENU MANAGEMENT
     function renderMenuManagement() {
       const tbody = document.getElementById('menu-mgmt-table');
       tbody.innerHTML = menuItems.map(m => `
