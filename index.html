@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hệ Thống Quản Lý Nội Bộ Nhà Hàng POS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hệ Thống Quản Lý Nhà Hàng POS (Web & Mobile)</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons -->
@@ -14,14 +14,42 @@
     .badge-serving { background-color: #DBEAFE; color: #2563EB; border-color: #93C5FD; }
     .badge-billing { background-color: #EDE9FE; color: #7C3AED; border-color: #C4B5FD; }
 
-    /* CSS Định dạng in hoá đơn chuẩn POS nhiệt */
+    /* Định dạng Mobile Mode khi kích hoạt */
+    body.mode-mobile {
+      background-color: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    body.mode-mobile #app-container {
+      width: 100%;
+      max-width: 430px;
+      height: 94vh;
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      border: 8px solid #1e293b;
+      position: relative;
+    }
+    body.mode-mobile aside {
+      display: none !important;
+    }
+    body.mode-mobile #mobile-bottom-nav {
+      display: flex !important;
+    }
+    body.mode-mobile #tab-order {
+      flex-direction: column !important;
+    }
+    body.mode-mobile #tab-order > div {
+      width: 100% !important;
+    }
+    body.mode-mobile #table-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
     @media print {
-      body * {
-        visibility: hidden !important;
-      }
-      #printable-receipt-area, #printable-receipt-area * {
-        visibility: visible !important;
-      }
+      body * { visibility: hidden !important; }
+      #printable-receipt-area, #printable-receipt-area * { visibility: visible !important; }
       #printable-receipt-area {
         position: absolute !important;
         left: 0 !important;
@@ -35,7 +63,7 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800 flex h-screen overflow-hidden">
+<body class="bg-gray-100 font-sans text-gray-800 h-screen overflow-hidden">
 
   <!-- ================= MÀN HÌNH ĐĂNG NHẬP ================= -->
   <div id="login-overlay" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
@@ -54,7 +82,7 @@
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Mật khẩu</label>
-          <input type="password" id="login-password" value="123456" required class="w-full border rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Mật khẩu..." />
+          <input type="password" id="login-password" value="123" required class="w-full border rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="Mật khẩu..." />
         </div>
         <div id="login-error-msg" class="text-red-500 text-xs hidden text-center font-medium">Tài khoản hoặc mật khẩu không chính xác!</div>
         <button type="submit" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-sm shadow-md transition-all">
@@ -62,502 +90,435 @@
         </button>
       </form>
       <div class="mt-4 text-[11px] text-gray-400 text-center bg-gray-50 p-2 rounded">
-        Mặc định: <b>admin</b> | Pass: <b>123456</b>
+        Mặc định: <b>admin</b> | Pass: <b>123</b>
       </div>
     </div>
   </div>
 
-  <!-- ================= SIDEBAR CỐ ĐỊNH ================= -->
-  <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between shrink-0">
-    <div>
-      <div class="p-5 flex items-center gap-3 border-b border-slate-800">
-        <i class="ph ph-cooking-pot text-2xl text-amber-500"></i>
-        <h1 class="font-bold text-lg leading-tight">GourmetOS</h1>
-      </div>
+  <!-- CONTAINER CHÍNH CỦA APP -->
+  <div id="app-container" class="flex h-full w-full bg-gray-100 relative overflow-hidden">
 
-      <!-- Menu Navigation -->
-      <nav class="p-3 space-y-1">
-        <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-amber-500 text-slate-950">
-          <i class="ph ph-squares-four text-lg"></i> Dashboard & Sơ đồ
-        </button>
-        <button onclick="switchTab('menu-mgmt')" class="nav-btn admin-manager-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800">
-          <i class="ph ph-book-open text-lg"></i> Quản lý Menu
-        </button>
-        <button onclick="switchTab('reports')" class="nav-btn admin-manager-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800">
-          <i class="ph ph-chart-line text-lg"></i> Báo cáo doanh thu
-        </button>
-        <button onclick="switchTab('settings')" class="nav-btn admin-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800">
-          <i class="ph ph-gear text-lg"></i> Tài khoản & Quyền
-        </button>
-      </nav>
-    </div>
-
-    <!-- Thông tin User & Đăng xuất -->
-    <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between">
+    <!-- ================= SIDEBAR (CHẾ ĐỘ WEB/DESKTOP) ================= -->
+    <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between shrink-0">
       <div>
-        <div class="text-xs font-bold text-white flex items-center gap-1.5" id="user-display-name">
-          <i class="ph ph-user-circle text-base text-amber-400"></i> Quản trị viên
+        <div class="p-5 flex items-center justify-between border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <i class="ph ph-cooking-pot text-2xl text-amber-500"></i>
+            <h1 class="font-bold text-lg leading-tight">GourmetOS</h1>
+          </div>
         </div>
-        <span class="text-[10px] text-amber-400 font-semibold uppercase tracking-wider" id="user-display-role">Admin</span>
+
+        <!-- Menu Navigation -->
+        <nav class="p-3 space-y-1">
+          <button onclick="switchTab('dashboard')" class="nav-btn nav-dashboard w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-amber-500 text-slate-950">
+            <i class="ph ph-squares-four text-lg"></i> Dashboard & Sơ đồ
+          </button>
+          <button onclick="switchTab('menu-mgmt')" class="nav-btn nav-menu-mgmt admin-manager-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800">
+            <i class="ph ph-book-open text-lg"></i> Quản lý Menu
+          </button>
+          <button onclick="switchTab('reports')" class="nav-btn nav-reports admin-manager-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800">
+            <i class="ph ph-chart-line text-lg"></i> Báo cáo doanh thu
+          </button>
+          <button onclick="switchTab('settings')" class="nav-btn nav-settings admin-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-slate-800">
+            <i class="ph ph-gear text-lg"></i> Tài khoản & Quyền
+          </button>
+        </nav>
       </div>
-      <button onclick="handleLogout()" title="Đăng xuất" class="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-slate-800">
-        <i class="ph ph-sign-out text-lg"></i>
+
+      <!-- Thông tin User & Đăng xuất -->
+      <div class="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between">
+        <div>
+          <div class="text-xs font-bold text-white flex items-center gap-1.5" id="user-display-name">
+            <i class="ph ph-user-circle text-base text-amber-400"></i> Quản trị viên
+          </div>
+          <span class="text-[10px] text-amber-400 font-semibold uppercase tracking-wider" id="user-display-role">Admin</span>
+        </div>
+        <button onclick="handleLogout()" title="Đăng xuất" class="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-slate-800">
+          <i class="ph ph-sign-out text-lg"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN WORKSPACE ================= -->
+    <main class="flex-1 flex flex-col overflow-y-auto pb-16 md:pb-0">
+      
+      <!-- TOP HEADER: NÚT CHUYỂN ĐỔI GIAO DIỆN WEB / MOBILE -->
+      <div class="bg-white border-b px-4 py-2.5 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Chế độ hiển thị:</span>
+          <div class="inline-flex bg-gray-100 p-1 rounded-lg border">
+            <button onclick="setDeviceView('desktop')" id="btn-mode-desktop" class="px-2.5 py-1 rounded text-xs font-bold bg-white text-slate-900 shadow-sm flex items-center gap-1">
+              <i class="ph ph-desktop"></i> Máy tính (Web)
+            </button>
+            <button onclick="setDeviceView('mobile')" id="btn-mode-mobile" class="px-2.5 py-1 rounded text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center gap-1">
+              <i class="ph ph-device-mobile"></i> Điện thoại
+            </button>
+          </div>
+        </div>
+        <button onclick="handleLogout()" class="md:hidden text-xs text-red-600 font-semibold flex items-center gap-1">
+          <i class="ph ph-sign-out"></i> Đăng xuất
+        </button>
+      </div>
+
+      <!-- MÀN HÌNH 1: DASHBOARD & SƠ ĐỒ BÀN -->
+      <section id="tab-dashboard" class="p-4 md:p-6 flex-1 flex flex-col">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+          <div>
+            <h2 class="text-xl md:text-2xl font-bold text-gray-900">Sơ đồ bàn phục vụ</h2>
+            <p class="text-xs text-gray-500">Chạm vào bàn để tạo đơn hoặc thanh toán</p>
+          </div>
+          
+          <!-- Công cụ Thiết Kế Bàn & Khu Vực -->
+          <div class="flex items-center gap-1.5 admin-manager-only">
+            <button onclick="toggleDesignMode()" id="btn-toggle-design" class="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-700 bg-white text-slate-800 flex items-center gap-1 shadow-sm">
+              <i class="ph ph-wrench"></i> Thiết kế: <span id="design-status-text" class="text-gray-500">Tắt</span>
+            </button>
+            <button onclick="openAddAreaModal()" class="design-tool hidden px-2.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white flex items-center gap-1">
+              + Khu vực
+            </button>
+            <button onclick="openAddTableModal()" class="design-tool hidden px-2.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white flex items-center gap-1">
+              + Bàn
+            </button>
+          </div>
+        </div>
+
+        <!-- Bộ lọc khu vực -->
+        <div class="flex items-center gap-2 mb-3 overflow-x-auto pb-1" id="zone-filter-container"></div>
+
+        <!-- Grid Bàn -->
+        <div id="table-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+      </section>
+
+      <!-- MÀN HÌNH 2: TẠO / XỬ LÝ ORDER (Hỗ trợ cuộn Mobile) -->
+      <section id="tab-order" class="hidden h-full flex flex-col md:flex-row overflow-y-auto md:overflow-hidden">
+        <!-- Cột Menu Trái -->
+        <div class="w-full md:w-7/12 border-b md:border-b-0 md:border-r bg-white flex flex-col h-auto md:h-full">
+          <div class="p-3 md:p-4 border-b flex justify-between items-center">
+            <div>
+              <h3 class="font-bold text-base md:text-lg" id="order-screen-table-title">Order - Bàn 01</h3>
+              <span class="text-xs text-gray-500" id="order-screen-zone">Khu vực: Tầng 1</span>
+            </div>
+            <button onclick="switchTab('dashboard')" class="text-xs bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded font-semibold">
+              Đóng
+            </button>
+          </div>
+          <div class="p-2 md:p-3 border-b flex gap-1.5 overflow-x-auto bg-gray-50" id="menu-categories"></div>
+          <div class="p-3 md:p-4 grid grid-cols-2 gap-2 md:gap-3 overflow-y-auto flex-1 max-h-72 md:max-h-full" id="menu-items-grid"></div>
+        </div>
+
+        <!-- Cột Order Ticket Phải -->
+        <div class="w-full md:w-5/12 bg-gray-50 flex flex-col h-auto md:h-full justify-between border-t md:border-t-0">
+          <div class="p-3 border-b bg-white flex justify-between items-center">
+            <div>
+              <span class="font-bold text-sm block">Món đã chọn</span>
+              <span class="text-[11px] text-indigo-600 font-semibold" id="order-screen-guests">Khách: 2 người</span>
+            </div>
+            <span class="text-xs text-gray-500" id="active-order-id">#ORD-NEW</span>
+          </div>
+          <div class="flex-1 overflow-y-auto p-3 space-y-2 max-h-60 md:max-h-full" id="order-ticket-items"></div>
+          <div class="p-3 bg-white border-t space-y-2.5">
+            <div class="flex justify-between text-sm md:text-base font-bold text-gray-900">
+              <span>Tổng tiền:</span>
+              <span id="order-ticket-total" class="text-emerald-600">0 ₫</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="openMoveTableModal()" class="px-2 py-2 text-xs border border-gray-300 font-semibold rounded bg-white">Chuyển bàn</button>
+              <button onclick="cancelActiveOrder()" class="px-2 py-2 text-xs border border-red-200 text-red-600 font-semibold rounded bg-red-50 admin-manager-only">Hủy Order</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="sendOrderToKitchen()" class="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1">
+                <i class="ph ph-paper-plane-tilt"></i> Gửi bếp
+              </button>
+              <button onclick="openCheckoutModal()" class="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1">
+                <i class="ph ph-receipt"></i> Thanh toán
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MÀN HÌNH 3: BÁO CÁO DOANH THU -->
+      <section id="tab-reports" class="hidden p-4 md:p-6">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+          <h2 class="text-xl md:text-2xl font-bold">Báo cáo doanh thu</h2>
+          <button onclick="exportReportToCSV()" class="px-3 py-1.5 bg-emerald-600 text-white font-bold text-xs rounded-lg flex items-center gap-1">
+            <i class="ph ph-file-csv"></i> Xuất Excel
+          </button>
+        </div>
+
+        <div class="bg-white p-3 rounded-xl border mb-4 flex flex-wrap items-center gap-2 text-xs">
+          <input type="date" id="filter-date-from" class="border rounded p-1.5 text-xs" />
+          <input type="date" id="filter-date-to" class="border rounded p-1.5 text-xs" />
+          <button onclick="applyReportFilter()" class="px-3 py-1.5 bg-slate-900 text-white rounded font-semibold">Lọc</button>
+          <button onclick="resetReportFilter()" class="px-2 py-1.5 border rounded">Hôm nay</button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 md:gap-4 mb-4">
+          <div class="bg-white p-3 rounded-xl border shadow-sm text-center md:text-left">
+            <div class="text-[11px] text-gray-500">Doanh thu</div>
+            <div class="text-sm md:text-lg font-bold text-gray-900 mt-1" id="report-revenue">0 ₫</div>
+          </div>
+          <div class="bg-white p-3 rounded-xl border shadow-sm text-center md:text-left">
+            <div class="text-[11px] text-gray-500">Số đơn</div>
+            <div class="text-sm md:text-lg font-bold text-gray-900 mt-1" id="report-orders">0</div>
+          </div>
+          <div class="bg-white p-3 rounded-xl border shadow-sm text-center md:text-left">
+            <div class="text-[11px] text-gray-500">Đơn TB</div>
+            <div class="text-sm md:text-lg font-bold text-blue-600 mt-1" id="report-avg">0 ₫</div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b bg-gray-50 text-gray-600">
+                <th class="p-2">Mã</th>
+                <th class="p-2">Bàn</th>
+                <th class="p-2">Thời gian</th>
+                <th class="p-2 text-right">Tổng tiền</th>
+              </tr>
+            </thead>
+            <tbody id="completed-orders-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- MÀN HÌNH 4: QUẢN LÝ MENU -->
+      <section id="tab-menu-mgmt" class="hidden p-4 md:p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl md:text-2xl font-bold">Quản lý thực đơn</h2>
+          <button onclick="openAddDishModal()" class="px-3 py-1.5 bg-amber-500 text-slate-950 font-bold text-xs rounded-lg">
+            + Thêm món
+          </button>
+        </div>
+        <div class="bg-white border rounded-xl overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="p-2.5">Món</th>
+                <th class="p-2.5">Bếp</th>
+                <th class="p-2.5">Giá</th>
+                <th class="p-2.5 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="menu-mgmt-table" class="divide-y"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- MÀN HÌNH 5: CÀI ĐẶT & TÀI KHOẢN -->
+      <section id="tab-settings" class="hidden p-4 md:p-6 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl md:text-2xl font-bold">Tài khoản & Phân quyền</h2>
+          <button onclick="openAddUserModal()" class="px-3 py-1.5 bg-slate-900 text-white font-bold text-xs rounded-lg">
+            + Thêm tài khoản
+          </button>
+        </div>
+        <div class="bg-white rounded-xl border overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="p-2.5">Họ tên</th>
+                <th class="p-2.5">User</th>
+                <th class="p-2.5">Quyền</th>
+                <th class="p-2.5 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ================= THANH ĐIỀU HƯỚNG ĐÁY MÀN HÌNH (MOBILE BOTTOM NAV) ================= -->
+    <nav id="mobile-bottom-nav" class="hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 text-white h-14 items-center justify-around z-40">
+      <button onclick="switchTab('dashboard')" class="flex flex-col items-center justify-center text-[10px] text-amber-400 font-bold">
+        <i class="ph ph-squares-four text-lg"></i> Sơ đồ bàn
       </button>
-    </div>
-  </aside>
+      <button onclick="switchTab('menu-mgmt')" class="admin-manager-only flex flex-col items-center justify-center text-[10px] text-gray-400">
+        <i class="ph ph-book-open text-lg"></i> Thực đơn
+      </button>
+      <button onclick="switchTab('reports')" class="admin-manager-only flex flex-col items-center justify-center text-[10px] text-gray-400">
+        <i class="ph ph-chart-line text-lg"></i> Báo cáo
+      </button>
+      <button onclick="switchTab('settings')" class="admin-only flex flex-col items-center justify-center text-[10px] text-gray-400">
+        <i class="ph ph-gear text-lg"></i> Cài đặt
+      </button>
+    </nav>
 
-  <!-- ================= MAIN WORKSPACE ================= -->
-  <main class="flex-1 flex flex-col overflow-y-auto">
-    
-    <!-- MÀN HÌNH 1: DASHBOARD & SƠ ĐỒ BÀN -->
-    <section id="tab-dashboard" class="p-6 flex-1 flex flex-col">
-      <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900">Sơ đồ bàn phục vụ</h2>
-          <p class="text-sm text-gray-500">Theo dõi bàn ăn, tạo đơn theo số khách và thanh toán</p>
-        </div>
-        
-        <!-- Công cụ Thiết Kế Bàn & Khu Vực -->
-        <div class="flex items-center gap-2 admin-manager-only">
-          <button onclick="toggleDesignMode()" id="btn-toggle-design" class="px-3.5 py-2 text-xs font-bold rounded-lg border border-slate-700 bg-white text-slate-800 flex items-center gap-1.5 shadow-sm hover:bg-gray-50">
-            <i class="ph ph-wrench"></i> Chế độ thiết kế: <span id="design-status-text" class="text-gray-500">Tắt</span>
-          </button>
-          
-          <button onclick="openAddAreaModal()" class="design-tool hidden px-3 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow-sm">
-            <i class="ph ph-plus-circle"></i> + Khu vực
-          </button>
-          
-          <button onclick="openAddTableModal()" class="design-tool hidden px-3 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm">
-            <i class="ph ph-table"></i> + Thêm bàn
-          </button>
-        </div>
+  </div>
+
+  <!-- ================= MODAL CHECKOUT & IN BILL ================= -->
+  <div id="modal-checkout" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-3 z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-3 my-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-base text-gray-900">Chi tiết thanh toán</h3>
+        <button onclick="closeModal('modal-checkout')" class="text-gray-400 text-xl font-bold">&times;</button>
       </div>
 
-      <!-- Bộ lọc khu vực -->
-      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1" id="zone-filter-container"></div>
-
-      <!-- Legend Chú thích trạng thái -->
-      <div class="flex items-center gap-4 text-xs mb-4 text-gray-600 bg-white p-3 rounded-lg border">
-        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-gray-200 border border-gray-400"></span> Trống</span>
-        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-400 border border-amber-500"></span> Đã Order</span>
-        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span> Đang phục vụ</span>
-        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-purple-500"></span> Chờ thanh toán</span>
-      </div>
-
-      <!-- Grid Bàn -->
-      <div id="table-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
-    </section>
-
-    <!-- MÀN HÌNH 2: TẠO / XỬ LÝ ORDER (Split-Screen) -->
-    <section id="tab-order" class="hidden h-full flex overflow-hidden">
-      <!-- Cột Menu Trái (60%) -->
-      <div class="w-7/12 border-r bg-white flex flex-col h-full">
-        <div class="p-4 border-b flex justify-between items-center">
-          <div>
-            <h3 class="font-bold text-lg" id="order-screen-table-title">Order - Bàn 01</h3>
-            <span class="text-xs text-gray-500" id="order-screen-zone">Khu vực: Tầng 1</span>
-          </div>
-          <button onclick="switchTab('dashboard')" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded">
-            Quay lại sơ đồ
-          </button>
-        </div>
-        <div class="p-3 border-b flex gap-2 overflow-x-auto bg-gray-50" id="menu-categories"></div>
-        <div class="p-4 grid grid-cols-2 gap-3 overflow-y-auto flex-1" id="menu-items-grid"></div>
-      </div>
-
-      <!-- Cột Order Ticket Phải (40%) -->
-      <div class="w-5/12 bg-gray-50 flex flex-col h-full justify-between">
-        <div class="p-4 border-b bg-white flex justify-between items-center">
-          <div>
-            <span class="font-bold text-sm block">Danh sách món đã gọi</span>
-            <span class="text-[11px] text-indigo-600 font-semibold" id="order-screen-guests">Khách: 2 người</span>
-          </div>
-          <span class="text-xs text-gray-500" id="active-order-id">#ORD-NEW</span>
-        </div>
-        <div class="flex-1 overflow-y-auto p-4 space-y-3" id="order-ticket-items"></div>
-        <div class="p-4 bg-white border-t space-y-3">
-          <div class="flex justify-between text-base font-bold text-gray-900">
-            <span>Tổng tiền:</span>
-            <span id="order-ticket-total">0 ₫</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="openMoveTableModal()" class="px-3 py-2 text-xs border border-gray-300 font-semibold rounded bg-white hover:bg-gray-50">Chuyển bàn</button>
-            <button onclick="cancelActiveOrder()" class="px-3 py-2 text-xs border border-red-200 text-red-600 font-semibold rounded bg-red-50 hover:bg-red-100 admin-manager-only">Hủy Order</button>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="sendOrderToKitchen()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2">
-              <i class="ph ph-paper-plane-tilt"></i> Gửi bếp
-            </button>
-            <button onclick="openCheckoutModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2">
-              <i class="ph ph-receipt"></i> Thanh toán
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- MÀN HÌNH 3: BÁO CÁO DOANH THU & FILTER & EXPORT EXCEL -->
-    <section id="tab-reports" class="hidden p-6">
-      <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <div>
-          <h2 class="text-2xl font-bold">Báo cáo hoạt động kinh doanh</h2>
-          <p class="text-xs text-gray-500">Lọc doanh thu theo khoảng thời gian và tải về file Excel</p>
-        </div>
-        <button onclick="exportReportToCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg flex items-center gap-1.5 shadow-sm">
-          <i class="ph ph-file-csv text-base"></i> Xuất Excel (.CSV)
-        </button>
-      </div>
-
-      <!-- Bộ lọc thời gian (Ngày - Tháng - Năm) -->
-      <div class="bg-white p-4 rounded-xl border mb-6 flex flex-wrap items-center gap-4 text-xs">
-        <div class="flex items-center gap-2">
-          <span class="text-gray-500 font-semibold">Từ ngày:</span>
-          <input type="date" id="filter-date-from" class="border rounded p-1.5 text-gray-700" />
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-gray-500 font-semibold">Đến ngày:</span>
-          <input type="date" id="filter-date-to" class="border rounded p-1.5 text-gray-700" />
-        </div>
-        <button onclick="applyReportFilter()" class="px-3.5 py-1.5 bg-slate-900 text-white rounded font-semibold hover:bg-slate-800">
-          Lọc dữ liệu
-        </button>
-        <button onclick="resetReportFilter()" class="px-3 py-1.5 border rounded text-gray-600 hover:bg-gray-50">
-          Hôm nay
-        </button>
-      </div>
-
-      <!-- Thẻ chỉ số tổng quan -->
-      <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="bg-white p-4 rounded-xl border shadow-sm">
-          <div class="text-xs text-gray-500 font-medium">Doanh thu kỳ lọc</div>
-          <div class="text-xl font-bold text-gray-900 mt-1" id="report-revenue">0 ₫</div>
-        </div>
-        <div class="bg-white p-4 rounded-xl border shadow-sm">
-          <div class="text-xs text-gray-500 font-medium">Số đơn thanh toán</div>
-          <div class="text-xl font-bold text-gray-900 mt-1" id="report-orders">0</div>
-        </div>
-        <div class="bg-white p-4 rounded-xl border shadow-sm">
-          <div class="text-xs text-gray-500 font-medium">Giá trị đơn TB</div>
-          <div class="text-xl font-bold text-blue-600 mt-1" id="report-avg">0 ₫</div>
-        </div>
-      </div>
-
-      <!-- Bảng lịch sử hoá đơn -->
-      <div class="bg-white p-5 rounded-xl border">
-        <h3 class="font-bold text-sm mb-3">Lịch sử hoá đơn theo điều kiện lọc</h3>
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="border-b bg-gray-50 text-gray-600">
-              <th class="p-2.5">Mã đơn</th>
-              <th class="p-2.5">Bàn</th>
-              <th class="p-2.5">Khách</th>
-              <th class="p-2.5">Thời gian</th>
-              <th class="p-2.5">Hình thức</th>
-              <th class="p-2.5 text-right">Tổng tiền</th>
-            </tr>
-          </thead>
-          <tbody id="completed-orders-table"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- MÀN HÌNH 4: QUẢN LÝ MENU -->
-    <section id="tab-menu-mgmt" class="hidden p-6">
-      <div class="flex justify-between items-center mb-6">
-        <div>
-          <h2 class="text-2xl font-bold">Quản lý thực đơn</h2>
-          <p class="text-sm text-gray-500">Tạo món mới, phân trạm bếp và quản lý tồn món</p>
-        </div>
-        <button onclick="openAddDishModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 shadow-sm">
-          <i class="ph ph-plus-circle font-bold text-base"></i> Thêm món mới
-        </button>
-      </div>
-      <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-gray-50 border-b text-gray-700">
-            <tr>
-              <th class="p-3">Tên món</th>
-              <th class="p-3">Nhóm món</th>
-              <th class="p-3">Bếp phụ trách</th>
-              <th class="p-3">Đơn giá</th>
-              <th class="p-3">Trạng thái</th>
-              <th class="p-3 text-right">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody id="menu-mgmt-table" class="divide-y text-gray-700"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- MÀN HÌNH 5: CÀI ĐẶT & TẠO TÀI KHOẢN ĐĂNG NHẬP -->
-    <section id="tab-settings" class="hidden p-6 space-y-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h2 class="text-2xl font-bold">Quản lý tài khoản đăng nhập</h2>
-          <p class="text-xs text-gray-500">Tạo mới nhân viên, chỉnh sửa quyền hạn và khóa truy cập</p>
-        </div>
-        <button onclick="openAddUserModal()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg flex items-center gap-1.5">
-          <i class="ph ph-user-plus"></i> + Tạo tài khoản
-        </button>
-      </div>
-
-      <!-- Danh sách tài khoản nhân viên -->
-      <div class="bg-white rounded-xl border overflow-hidden shadow-sm">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-gray-50 border-b text-gray-700">
-            <tr>
-              <th class="p-3">Họ và tên</th>
-              <th class="p-3">Tài khoản (Username)</th>
-              <th class="p-3">Vai trò (Role)</th>
-              <th class="p-3">Trạng thái</th>
-              <th class="p-3 text-right">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody id="users-table-body" class="divide-y"></tbody>
-        </table>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ================= CÁC MODAL HỆ THỐNG ================= -->
-
-  <!-- MODAL THANH TOÁN & IN BILL CHI TIẾT -->
-  <div id="modal-checkout" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 my-8 shadow-2xl">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="font-bold text-lg text-gray-900">Chi tiết thanh toán</h3>
-        <button onclick="closeModal('modal-checkout')" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
-      </div>
-
-      <!-- KHU VỰC SẼ IN RA GIẤY (PRINT RECEIPT) -->
+      <!-- VÙNG IN HOÁ ĐƠN NHIỆT -->
       <div id="printable-receipt-area" class="text-xs text-gray-700 font-mono space-y-2 p-3 bg-gray-50 border rounded-lg">
         <div class="text-center pb-2 border-b border-dashed border-gray-400">
-          <h4 class="font-bold text-base text-gray-900 font-sans uppercase">GourmetOS Restaurant</h4>
-          <p class="text-[10px] text-gray-500">123 Đường Ẩm Thực, Quận 1, TP.HCM</p>
-          <p class="text-[10px] text-gray-500" id="bill-receipt-datetime">Thời gian: 01/01/2026 12:00</p>
-          <div class="flex justify-between text-[11px] font-bold mt-2">
+          <h4 class="font-bold text-sm text-gray-900 font-sans uppercase">GourmetOS Restaurant</h4>
+          <p class="text-[10px] text-gray-500" id="bill-receipt-datetime">Thời gian: 01/01/2026</p>
+          <div class="flex justify-between text-[11px] font-bold mt-1">
             <span id="bill-table-info">Bàn 01</span>
             <span id="bill-code-info">#ORD-101</span>
           </div>
           <div class="text-left text-[10px] text-gray-500" id="bill-guests-info">Số lượng: 2 khách</div>
         </div>
 
-        <!-- Danh sách chi tiết từng món -->
-        <table class="w-full text-left my-2">
+        <table class="w-full text-left my-1 text-[11px]">
           <thead>
             <tr class="border-b border-dashed text-gray-500">
               <th class="py-1">Món</th>
               <th class="py-1 text-center">SL</th>
-              <th class="py-1 text-right">Đơn giá</th>
               <th class="py-1 text-right">T.Tiền</th>
             </tr>
           </thead>
           <tbody id="bill-items-list" class="divide-y divide-dashed"></tbody>
         </table>
 
-        <div class="pt-2 border-t border-dashed border-gray-400 flex justify-between text-sm font-bold text-gray-900">
-          <span>TỔNG THANH TOÁN:</span>
-          <span class="text-emerald-600 font-sans text-base" id="bill-total-amount">0 ₫</span>
+        <div class="pt-2 border-t border-dashed border-gray-400 flex justify-between text-xs font-bold text-gray-900">
+          <span>TỔNG TIỀN:</span>
+          <span class="text-emerald-600 font-sans text-sm" id="bill-total-amount">0 ₫</span>
         </div>
-        <div class="text-center text-[10px] text-gray-400 pt-2">Cảm ơn Quý khách & Hẹn gặp lại!</div>
       </div>
 
-      <!-- Chọn hình thức thanh toán -->
       <div>
-        <label class="text-xs text-gray-500 block mb-1">Phương thức thanh toán:</label>
+        <label class="text-[11px] text-gray-500 block mb-1">Phương thức thanh toán:</label>
         <div class="grid grid-cols-2 gap-2">
-          <label class="flex items-center gap-2 border p-2 rounded-lg cursor-pointer hover:bg-gray-50 text-xs">
+          <label class="flex items-center gap-1.5 border p-2 rounded cursor-pointer text-xs">
             <input type="radio" name="payment_method" value="Tiền mặt" checked />
             <span>Tiền mặt</span>
           </label>
-          <label class="flex items-center gap-2 border p-2 rounded-lg cursor-pointer hover:bg-gray-50 text-xs">
+          <label class="flex items-center gap-1.5 border p-2 rounded cursor-pointer text-xs">
             <input type="radio" name="payment_method" value="Chuyển khoản QR" />
-            <span>Chuyển khoản QR</span>
+            <span>Chuyển khoản</span>
           </label>
         </div>
       </div>
 
-      <!-- Action Buttons -->
       <div class="grid grid-cols-2 gap-2 pt-2 border-t">
-        <button onclick="printBillReceipt()" class="py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5">
-          <i class="ph ph-printer text-base"></i> In hoá đơn
+        <button onclick="printBillReceipt()" class="py-2.5 bg-slate-800 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1">
+          <i class="ph ph-printer"></i> In hoá đơn
         </button>
-        <button onclick="confirmPayment()" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5">
-          <i class="ph ph-check-circle text-base"></i> Hoàn tất thu tiền
+        <button onclick="confirmPayment()" class="py-2.5 bg-emerald-600 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1">
+          <i class="ph ph-check-circle"></i> Hoàn tất thu tiền
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: TẠO TÀI KHOẢN NHÂN VIÊN MỚI -->
-  <div id="modal-add-user" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-base text-gray-900">Tạo tài khoản đăng nhập</h3>
-        <button onclick="closeModal('modal-add-user')" class="text-gray-400 hover:text-gray-600">&times;</button>
-      </div>
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="text-gray-600 block mb-1">Họ tên nhân viên:</label>
-          <input type="text" id="input-new-user-fullname" placeholder="VD: Nguyễn Văn B" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
-        </div>
-        <div>
-          <label class="text-gray-600 block mb-1">Tên đăng nhập (Username):</label>
-          <input type="text" id="input-new-user-username" placeholder="VD: staff01" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
-        </div>
-        <div>
-          <label class="text-gray-600 block mb-1">Mật khẩu ban đầu:</label>
-          <input type="password" id="input-new-user-password" placeholder="Nhập mật khẩu..." class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
-        </div>
-        <div>
-          <label class="text-gray-600 block mb-1">Vai trò phân quyền:</label>
-          <select id="select-new-user-role" class="w-full border rounded-lg p-2 text-sm focus:outline-none">
-            <option value="Staff">Staff (Nhân viên phục vụ/gọi món)</option>
-            <option value="Manager">Manager (Quản lý)</option>
-            <option value="Admin">Admin (Toàn quyền)</option>
-          </select>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModal('modal-add-user')" class="px-3 py-1.5 text-xs border rounded-lg">Hủy</button>
-        <button onclick="saveNewUser()" class="px-4 py-2 text-xs bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold">Tạo tài khoản</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: THÊM MÓN ĂN MỚI -->
-  <div id="modal-add-dish" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-md w-full p-5 space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-base text-gray-900">Thêm món ăn mới vào thực đơn</h3>
-        <button onclick="closeModal('modal-add-dish')" class="text-gray-400 hover:text-gray-600">&times;</button>
-      </div>
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs text-gray-600 block mb-1">Tên món ăn / thức uống:</label>
-          <input type="text" id="input-dish-name" placeholder="Ví dụ: Cơm Chiên Hải Sản" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-xs text-gray-600 block mb-1">Nhóm món:</label>
-            <input type="text" id="input-dish-category" list="category-datalist" placeholder="Chọn hoặc gõ mới" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-            <datalist id="category-datalist"></datalist>
-          </div>
-          <div>
-            <label class="text-xs text-gray-600 block mb-1">Trạm bếp chế biến:</label>
-            <select id="select-dish-kitchen" class="w-full border rounded-lg p-2 text-sm focus:outline-none">
-              <option value="Bếp nấu">Bếp nấu</option>
-              <option value="Bếp nướng">Bếp nướng</option>
-              <option value="Bartender">Bartender</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="text-xs text-gray-600 block mb-1">Đơn giá bán (VNĐ):</label>
-          <input type="number" id="input-dish-price" placeholder="Ví dụ: 85000" min="0" step="1000" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 pt-2 border-t">
-        <button onclick="closeModal('modal-add-dish')" class="px-3 py-1.5 text-xs border rounded-lg">Hủy</button>
-        <button onclick="saveNewDish()" class="px-4 py-2 text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg font-bold">Lưu vào thực đơn</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: CHỌN SỐ LƯỢNG KHÁCH -->
+  <!-- MODAL: NHẬP SỐ KHÁCH KHI MỞ BÀN -->
   <div id="modal-select-guests" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-base text-gray-900" id="guest-modal-table-title">Mở bàn & Tạo Order</h3>
-        <button onclick="closeModal('modal-select-guests')" class="text-gray-400 hover:text-gray-600">&times;</button>
+    <div class="bg-white rounded-xl max-w-xs w-full p-5 space-y-4">
+      <h3 class="font-bold text-sm text-gray-900" id="guest-modal-table-title">Mở bàn & Nhập số khách</h3>
+      <div class="flex items-center justify-center gap-3">
+        <button onclick="adjustGuestCount(-1)" class="w-10 h-10 border rounded-lg font-bold text-lg">-</button>
+        <input type="number" id="input-guest-count" value="2" min="1" max="50" class="w-16 border rounded-lg p-2 text-center text-lg font-bold" />
+        <button onclick="adjustGuestCount(1)" class="w-10 h-10 border rounded-lg font-bold text-lg">+</button>
       </div>
-      <div>
-        <label class="text-xs text-gray-600 block mb-1">Số lượng khách vào bàn:</label>
-        <div class="flex items-center gap-3">
-          <button onclick="adjustGuestCount(-1)" class="w-10 h-10 border rounded-lg font-bold text-lg hover:bg-gray-100">-</button>
-          <input type="number" id="input-guest-count" value="2" min="1" max="50" class="flex-1 border rounded-lg p-2 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-amber-500" />
-          <button onclick="adjustGuestCount(1)" class="w-10 h-10 border rounded-lg font-bold text-lg hover:bg-gray-100">+</button>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeModal('modal-select-guests')" class="px-3 py-1.5 text-xs border rounded-lg">Hủy</button>
-        <button onclick="confirmCreateOrderWithGuests()" class="px-4 py-2 text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg flex items-center gap-1">
-          <i class="ph ph-check-circle"></i> Bắt đầu gọi món
-        </button>
+      <div class="flex gap-2">
+        <button onclick="closeModal('modal-select-guests')" class="w-1/2 py-2 text-xs border rounded-lg">Hủy</button>
+        <button onclick="confirmCreateOrderWithGuests()" class="w-1/2 py-2 text-xs bg-amber-500 text-slate-950 font-bold rounded-lg">Gọi món</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: THÊM KHU VỰC MỚI -->
+  <!-- MODAL: THÊM MÓN ĂN -->
+  <div id="modal-add-dish" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-sm">Thêm món mới vào menu</h3>
+        <button onclick="closeModal('modal-add-dish')" class="text-gray-400 font-bold">&times;</button>
+      </div>
+      <input type="text" id="input-dish-name" placeholder="Tên món ăn..." class="w-full border rounded-lg p-2 text-xs" />
+      <input type="text" id="input-dish-category" placeholder="Nhóm món (Nướng, Nấu, Đồ uống...)" class="w-full border rounded-lg p-2 text-xs" />
+      <select id="select-dish-kitchen" class="w-full border rounded-lg p-2 text-xs">
+        <option value="Bếp nấu">Bếp nấu</option>
+        <option value="Bếp nướng">Bếp nướng</option>
+        <option value="Bartender">Bartender</option>
+      </select>
+      <input type="number" id="input-dish-price" placeholder="Đơn giá (VNĐ)..." class="w-full border rounded-lg p-2 text-xs" />
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('modal-add-dish')" class="px-3 py-1.5 text-xs border rounded">Hủy</button>
+        <button onclick="saveNewDish()" class="px-4 py-1.5 text-xs bg-amber-500 font-bold rounded">Lưu món</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TẠO TÀI KHOẢN -->
+  <div id="modal-add-user" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-xs w-full p-5 space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-sm">Tạo tài khoản nhân viên</h3>
+        <button onclick="closeModal('modal-add-user')" class="text-gray-400 font-bold">&times;</button>
+      </div>
+      <input type="text" id="input-new-user-fullname" placeholder="Họ và tên..." class="w-full border rounded-lg p-2 text-xs" />
+      <input type="text" id="input-new-user-username" placeholder="Tên đăng nhập..." class="w-full border rounded-lg p-2 text-xs" />
+      <input type="password" id="input-new-user-password" placeholder="Mật khẩu..." class="w-full border rounded-lg p-2 text-xs" />
+      <select id="select-new-user-role" class="w-full border rounded-lg p-2 text-xs">
+        <option value="Staff">Staff</option>
+        <option value="Manager">Manager</option>
+        <option value="Admin">Admin</option>
+      </select>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('modal-add-user')" class="px-3 py-1.5 text-xs border rounded">Hủy</button>
+        <button onclick="saveNewUser()" class="px-4 py-1.5 text-xs bg-slate-900 text-white font-bold rounded">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: THÊM KHU VỰC -->
   <div id="modal-add-area" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-base text-gray-900">Thêm khu vực mới</h3>
-        <button onclick="closeModal('modal-add-area')" class="text-gray-400 hover:text-gray-600">&times;</button>
-      </div>
-      <div>
-        <label class="text-xs text-gray-600 block mb-1">Tên khu vực (VD: Tầng 3, Sân thượng):</label>
-        <input type="text" id="input-area-name" placeholder="Nhập tên khu vực..." class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      </div>
+    <div class="bg-white rounded-xl max-w-xs w-full p-5 space-y-3">
+      <h3 class="font-bold text-sm">Thêm khu vực mới</h3>
+      <input type="text" id="input-area-name" placeholder="Tên khu vực (VD: Tầng 3)..." class="w-full border rounded-lg p-2 text-xs" />
       <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeModal('modal-add-area')" class="px-3 py-1.5 text-xs border rounded-lg">Hủy</button>
-        <button onclick="saveNewArea()" class="px-4 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold">Lưu khu vực</button>
+        <button onclick="closeModal('modal-add-area')" class="px-3 py-1.5 text-xs border rounded">Hủy</button>
+        <button onclick="saveNewArea()" class="px-4 py-1.5 text-xs bg-indigo-600 text-white font-bold rounded">Lưu</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: THÊM / SỬA BÀN -->
+  <!-- MODAL: THÊM BÀN -->
   <div id="modal-table-form" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-md w-full p-5 space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-base text-gray-900" id="table-modal-title">Thêm bàn mới</h3>
-        <button onclick="closeModal('modal-table-form')" class="text-gray-400 hover:text-gray-600">&times;</button>
-      </div>
+    <div class="bg-white rounded-xl max-w-xs w-full p-5 space-y-3">
+      <h3 class="font-bold text-sm" id="table-modal-title">Thêm bàn mới</h3>
       <input type="hidden" id="input-table-id" />
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs text-gray-600 block mb-1">Tên/Số bàn:</label>
-          <input type="text" id="input-table-name" placeholder="Ví dụ: Bàn 09, Bàn VIP 2" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-        </div>
-        <div>
-          <label class="text-xs text-gray-600 block mb-1">Gắn vào khu vực:</label>
-          <select id="select-table-zone" class="w-full border rounded-lg p-2 text-sm focus:outline-none"></select>
-        </div>
-        <div>
-          <label class="text-xs text-gray-600 block mb-1">Sức chứa tối đa (Pax):</label>
-          <input type="number" id="input-table-capacity" value="4" min="1" max="50" class="w-full border rounded-lg p-2 text-sm focus:outline-none" />
-        </div>
-      </div>
+      <input type="text" id="input-table-name" placeholder="Tên bàn..." class="w-full border rounded-lg p-2 text-xs" />
+      <select id="select-table-zone" class="w-full border rounded-lg p-2 text-xs"></select>
+      <input type="number" id="input-table-capacity" value="4" class="w-full border rounded-lg p-2 text-xs" />
       <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeModal('modal-table-form')" class="px-3 py-1.5 text-xs border rounded-lg">Hủy</button>
-        <button onclick="saveTableData()" class="px-4 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold">Lưu bàn</button>
+        <button onclick="closeModal('modal-table-form')" class="px-3 py-1.5 text-xs border rounded">Hủy</button>
+        <button onclick="saveTableData()" class="px-4 py-1.5 text-xs bg-emerald-600 text-white font-bold rounded">Lưu</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: CHUYỂN BÀN -->
   <div id="modal-move-table" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 space-y-4">
-      <h3 class="font-bold text-base">Chuyển toàn bộ order sang bàn mới</h3>
-      <div>
-        <label class="text-xs text-gray-500 block mb-1">Chọn bàn đích (đang trống):</label>
-        <select id="select-destination-table" class="w-full border rounded p-2 text-sm"></select>
-      </div>
-      <div class="flex gap-2 justify-end">
+    <div class="bg-white rounded-xl max-w-xs w-full p-5 space-y-3">
+      <h3 class="font-bold text-sm">Chuyển sang bàn khác</h3>
+      <select id="select-destination-table" class="w-full border rounded p-2 text-xs"></select>
+      <div class="flex justify-end gap-2 pt-2">
         <button onclick="closeModal('modal-move-table')" class="px-3 py-1.5 text-xs border rounded">Hủy</button>
-        <button onclick="confirmMoveTable()" class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded font-bold">Xác nhận chuyển</button>
+        <button onclick="confirmMoveTable()" class="px-4 py-1.5 text-xs bg-blue-600 text-white font-bold rounded">Chuyển</button>
       </div>
     </div>
   </div>
 
-  <!-- ================= LOGIC TOÀN CỤC JAVASCRIPT ================= -->
+  <!-- ================= CORE LOGIC JAVASCRIPT ================= -->
   <script>
-    // 1. DATA STATE & USERS
+    // 1. DATA STATE & DEVICE VIEW
+    let currentDeviceMode = 'desktop'; // 'desktop' | 'mobile'
+
     const defaultUsers = [
       { id: 1, fullname: 'Quản Trị Viên', username: 'admin', password: '123', role: 'Admin', status: 'Hoạt động' },
       { id: 2, fullname: 'Trưởng Ca Nguyễn', username: 'manager', password: '123', role: 'Manager', status: 'Hoạt động' },
-      { id: 3, fullname: 'Nhân Viên Phục Vụ 1', username: 'staff1', password: '123', role: 'Staff', status: 'Hoạt động' }
+      { id: 3, fullname: 'Nhân Viên Staff', username: 'staff1', password: '123', role: 'Staff', status: 'Hoạt động' }
     ];
 
     const defaultZones = ['Tầng 1', 'Tầng 2', 'VIP'];
@@ -573,9 +534,9 @@
     const defaultMenu = [
       { id: 1, name: 'Bò Wagyu Nướng Sốt Tiêu', category: 'Nướng', kitchen: 'Bếp nướng', price: 320000, status: 'Đang bán' },
       { id: 2, name: 'Sườn Heo Nướng BBQ', category: 'Nướng', kitchen: 'Bếp nướng', price: 185000, status: 'Đang bán' },
-      { id: 3, name: 'Pasta Sốt Bò Băm Bolognese', category: 'Món chính', kitchen: 'Bếp nấu', price: 120000, status: 'Đang bán' },
+      { id: 3, name: 'Pasta Sốt Bò Băm', category: 'Món chính', kitchen: 'Bếp nấu', price: 120000, status: 'Đang bán' },
       { id: 4, name: 'Súp Bí Đỏ Kem Nấm', category: 'Khai vị', kitchen: 'Bếp nấu', price: 65000, status: 'Đang bán' },
-      { id: 5, name: 'Salad Hoàng Gia Cá Hồi', category: 'Khai vị', kitchen: 'Bếp nấu', price: 95000, status: 'Tạm hết' },
+      { id: 5, name: 'Salad Cá Hồi', category: 'Khai vị', kitchen: 'Bếp nấu', price: 95000, status: 'Tạm hết' },
       { id: 6, name: 'Cocktail Old Fashioned', category: 'Đồ uống', kitchen: 'Bartender', price: 110000, status: 'Đang bán' },
       { id: 7, name: 'Mojito Chanh Bạc Hà', category: 'Đồ uống', kitchen: 'Bartender', price: 65000, status: 'Đang bán' },
       { id: 8, name: 'Panna Cotta Dâu Rừng', category: 'Dessert', kitchen: 'Bếp nấu', price: 55000, status: 'Đang bán' }
@@ -585,10 +546,7 @@
     let zones = JSON.parse(localStorage.getItem('restaurant_zones')) || defaultZones;
     let tables = JSON.parse(localStorage.getItem('restaurant_tables')) || defaultTables;
     let menuItems = JSON.parse(localStorage.getItem('restaurant_menu')) || defaultMenu;
-    let orderHistory = JSON.parse(localStorage.getItem('restaurant_history')) || [
-      { orderId: 'ORD-090', tableName: 'Bàn 02', guests: 2, date: '2026-09-01', time: '12:30', method: 'Tiền mặt', total: 450000 },
-      { orderId: 'ORD-091', tableName: 'Phòng VIP 1', guests: 8, date: '2026-09-02', time: '19:45', method: 'Chuyển khoản QR', total: 1850000 }
-    ];
+    let orderHistory = JSON.parse(localStorage.getItem('restaurant_history')) || [];
 
     let currentUser = JSON.parse(sessionStorage.getItem('pos_current_user')) || null;
     let isDesignMode = false;
@@ -604,8 +562,31 @@
       localStorage.setItem('restaurant_history', JSON.stringify(orderHistory));
     }
 
-    // 2. LIFECYCLE & XÁC THỰC (AUTHENTICATION)
+    // 2. DEVICE SWITCHER LOGIC
+    function setDeviceView(mode) {
+      currentDeviceMode = mode;
+      const body = document.body;
+      const btnDesk = document.getElementById('btn-mode-desktop');
+      const btnMob = document.getElementById('btn-mode-mobile');
+
+      if (mode === 'mobile') {
+        body.classList.add('mode-mobile');
+        btnMob.className = 'px-2.5 py-1 rounded text-xs font-bold bg-white text-slate-900 shadow-sm flex items-center gap-1';
+        btnDesk.className = 'px-2.5 py-1 rounded text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center gap-1';
+      } else {
+        body.classList.remove('mode-mobile');
+        btnDesk.className = 'px-2.5 py-1 rounded text-xs font-bold bg-white text-slate-900 shadow-sm flex items-center gap-1';
+        btnMob.className = 'px-2.5 py-1 rounded text-xs font-semibold text-gray-500 hover:text-gray-800 flex items-center gap-1';
+      }
+      renderTables();
+    }
+
+    // 3. AUTHENTICATION
     window.onload = () => {
+      // Tự động phát hiện màn hình điện thoại thực tế
+      if (window.innerWidth < 768) {
+        setDeviceView('mobile');
+      }
       checkAuth();
       renderZoneFilters();
       renderTables();
@@ -634,10 +615,7 @@
 
       const user = users.find(x => x.username === u && x.password === p);
       if (user) {
-        if (user.status === 'Đã khóa') {
-          alert('Tài khoản này đã bị khóa bởi quản trị viên!');
-          return;
-        }
+        if (user.status === 'Đã khóa') return alert('Tài khoản này đã bị khóa!');
         currentUser = user;
         sessionStorage.setItem('pos_current_user', JSON.stringify(currentUser));
         document.getElementById('login-error-msg').classList.add('hidden');
@@ -648,7 +626,7 @@
     }
 
     function handleLogout() {
-      if (confirm('Bạn có muốn đăng xuất khỏi phiên làm việc?')) {
+      if (confirm('Bạn có muốn đăng xuất?')) {
         currentUser = null;
         sessionStorage.removeItem('pos_current_user');
         checkAuth();
@@ -658,83 +636,11 @@
     function applyRolePermissions() {
       const adminManagerEls = document.querySelectorAll('.admin-manager-only');
       const adminEls = document.querySelectorAll('.admin-only');
-
-      adminManagerEls.forEach(el => {
-        el.style.display = (currentUser.role === 'Admin' || currentUser.role === 'Manager') ? '' : 'none';
-      });
-      adminEls.forEach(el => {
-        el.style.display = (currentUser.role === 'Admin') ? '' : 'none';
-      });
+      adminManagerEls.forEach(el => el.style.display = (currentUser.role === 'Admin' || currentUser.role === 'Manager') ? '' : 'none');
+      adminEls.forEach(el => el.style.display = (currentUser.role === 'Admin') ? '' : 'none');
     }
 
-    // 3. QUẢN LÝ TÀI KHOẢN (SETTINGS)
-    function renderUsersTable() {
-      const tbody = document.getElementById('users-table-body');
-      tbody.innerHTML = users.map(u => `
-        <tr class="hover:bg-gray-50">
-          <td class="p-3 font-semibold text-gray-900">${u.fullname}</td>
-          <td class="p-3 font-mono text-gray-600">${u.username}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded font-bold text-[10px] ${u.role === 'Admin' ? 'bg-purple-100 text-purple-700' : (u.role === 'Manager' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700')}">${u.role}</span></td>
-          <td class="p-3">
-            <span class="px-2 py-0.5 rounded font-bold text-[10px] ${u.status === 'Hoạt động' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}">${u.status}</span>
-          </td>
-          <td class="p-3 text-right">
-            ${u.username !== 'admin' ? `
-              <button onclick="toggleUserStatus(${u.id})" class="text-xs px-2 py-1 rounded border hover:bg-gray-100">
-                ${u.status === 'Hoạt động' ? 'Khóa' : 'Mở khóa'}
-              </button>
-              <button onclick="deleteUser(${u.id})" class="text-xs px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 ml-1">Xóa</button>
-            ` : '<span class="text-gray-400 text-[11px] italic">Gốc</span>'}
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    function openAddUserModal() {
-      document.getElementById('input-new-user-fullname').value = '';
-      document.getElementById('input-new-user-username').value = '';
-      document.getElementById('input-new-user-password').value = '';
-      document.getElementById('modal-add-user').classList.remove('hidden');
-    }
-
-    function saveNewUser() {
-      const fullname = document.getElementById('input-new-user-fullname').value.trim();
-      const username = document.getElementById('input-new-user-username').value.trim();
-      const password = document.getElementById('input-new-user-password').value.trim();
-      const role = document.getElementById('select-new-user-role').value;
-
-      if (!fullname || !username || !password) {
-        alert('Vui lòng điền đủ họ tên, tài khoản và mật khẩu!');
-        return;
-      }
-      if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-        alert('Tên đăng nhập này đã tồn tại!');
-        return;
-      }
-
-      users.push({ id: Date.now(), fullname, username, password, role, status: 'Hoạt động' });
-      saveState();
-      closeModal('modal-add-user');
-      renderUsersTable();
-      alert(`Đã tạo tài khoản cho ${fullname} thành công!`);
-    }
-
-    function toggleUserStatus(id) {
-      const u = users.find(x => x.id === id);
-      u.status = u.status === 'Hoạt động' ? 'Đã khóa' : 'Hoạt động';
-      saveState();
-      renderUsersTable();
-    }
-
-    function deleteUser(id) {
-      if (confirm('Bạn có chắc muốn xóa tài khoản nhân viên này?')) {
-        users = users.filter(x => x.id !== id);
-        saveState();
-        renderUsersTable();
-      }
-    }
-
-    // 4. BÁO CÁO DOANH THU & FILTER & EXCEL EXPORT
+    // 4. BÁO CÁO & EXPORT CSV
     function initReportDates() {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('filter-date-from').value = today;
@@ -749,12 +655,7 @@
     function applyReportFilter() {
       const from = document.getElementById('filter-date-from').value;
       const to = document.getElementById('filter-date-to').value;
-
-      const filtered = orderHistory.filter(o => {
-        if (!o.date) return true;
-        return o.date >= from && o.date <= to;
-      });
-
+      const filtered = orderHistory.filter(o => !o.date || (o.date >= from && o.date <= to));
       updateReports(filtered);
     }
 
@@ -770,46 +671,33 @@
       const tbody = document.getElementById('completed-orders-table');
       tbody.innerHTML = data.map(o => `
         <tr class="border-b">
-          <td class="p-2.5 font-bold">${o.orderId}</td>
-          <td class="p-2.5">${o.tableName}</td>
-          <td class="p-2.5 text-indigo-600 font-semibold">${o.guests} pax</td>
-          <td class="p-2.5 text-gray-500">${o.date || ''} ${o.time}</td>
-          <td class="p-2.5">${o.method}</td>
-          <td class="p-2.5 text-right font-bold text-gray-900">${o.total.toLocaleString('vi-VN')} ₫</td>
+          <td class="p-2 font-bold">${o.orderId}</td>
+          <td class="p-2">${o.tableName}</td>
+          <td class="p-2 text-gray-500">${o.time}</td>
+          <td class="p-2 text-right font-bold">${o.total.toLocaleString('vi-VN')} ₫</td>
         </tr>
       `).join('');
     }
 
-    // Xuất dữ liệu Excel chuẩn CSV (có gắn UTF-8 BOM không lỗi tiếng Việt)
     function exportReportToCSV() {
-      if (orderHistory.length === 0) {
-        alert('Không có dữ liệu đơn hàng để xuất!');
-        return;
-      }
-
-      let csv = '\uFEFF'; // Byte Order Mark giúp Excel hiển thị đúng Tiếng Việt
-      csv += 'Mã đơn,Bàn,Số khách,Ngày,Thời gian,Phương thức thanh toán,Tổng tiền (VNĐ)\n';
-
+      if (orderHistory.length === 0) return alert('Chưa có hoá đơn nào để xuất!');
+      let csv = '\uFEFFMã đơn,Bàn,Số khách,Ngày,Thời gian,Phương thức,Tổng tiền (VNĐ)\n';
       orderHistory.forEach(o => {
         csv += `"${o.orderId}","${o.tableName}","${o.guests}","${o.date || ''}","${o.time}","${o.method}","${o.total}"\n`;
       });
-
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', `Bao_Cao_Doanh_Thu_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `Bao_Cao_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
 
-    // 5. THANH TOÁN, CHI TIẾT HOÁ ĐƠN & PRINT BILL
+    // 5. CHECKOUT & PRINT BILL
     function openCheckoutModal() {
       const t = tables.find(x => x.id === activeTableId);
-      if (!t.order || t.order.items.length === 0) {
-        alert('Bàn chưa có order để thanh toán!');
-        return;
-      }
+      if (!t.order || t.order.items.length === 0) return alert('Bàn chưa có order!');
       t.status = 'Chờ thanh toán';
 
       let total = 0;
@@ -825,7 +713,6 @@
         row.innerHTML = `
           <td class="py-1">${m.name}</td>
           <td class="py-1 text-center">${it.qty}</td>
-          <td class="py-1 text-right">${m.price.toLocaleString('vi-VN')}</td>
           <td class="py-1 text-right font-bold">${lineTotal.toLocaleString('vi-VN')}</td>
         `;
         listContainer.appendChild(row);
@@ -852,13 +739,12 @@
         return sum + (m ? m.price * it.qty : 0);
       }, 0);
       const method = document.querySelector('input[name="payment_method"]:checked').value;
-      const today = new Date().toISOString().split('T')[0];
 
       orderHistory.unshift({
         orderId: t.order.id,
         tableName: t.name,
         guests: t.order.guests || 2,
-        date: today,
+        date: new Date().toISOString().split('T')[0],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         method: method,
         total: total
@@ -869,12 +755,12 @@
 
       saveState();
       closeModal('modal-checkout');
-      alert('Đã thanh toán thành công và lưu vào báo cáo doanh thu!');
+      alert('Thanh toán thành công!');
       updateReports();
       switchTab('dashboard');
     }
 
-    // 6. ORDER WORKFLOW & ROUTING
+    // 6. ORDER WORKFLOW
     function handleTableClick(tableId) {
       const t = tables.find(x => x.id === tableId);
       if (!t.order) {
@@ -897,14 +783,12 @@
     function confirmCreateOrderWithGuests() {
       const guests = parseInt(document.getElementById('input-guest-count').value) || 1;
       const t = tables.find(x => x.id === pendingCreateOrderTableId);
-      
       t.order = {
         id: `ORD-${Math.floor(100 + Math.random() * 900)}`,
         guests: guests,
         items: [],
         startTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      
       closeModal('modal-select-guests');
       saveState();
       openTableOrder(pendingCreateOrderTableId);
@@ -913,9 +797,8 @@
     function openTableOrder(tableId) {
       activeTableId = tableId;
       const t = tables.find(x => x.id === tableId);
-
       document.getElementById('order-screen-table-title').innerText = `${t.name} (${t.status})`;
-      document.getElementById('order-screen-zone').innerText = `Khu vực: ${t.zone} | Sức chứa tối đa: ${t.capacity} chỗ`;
+      document.getElementById('order-screen-zone').innerText = `Khu vực: ${t.zone}`;
       document.getElementById('order-screen-guests').innerText = `Khách: ${t.order.guests || 2} người`;
       document.getElementById('active-order-id').innerText = `#${t.order.id}`;
 
@@ -929,7 +812,7 @@
       const cats = ['Tất cả', ...new Set(menuItems.map(m => m.category))];
       const container = document.getElementById('menu-categories');
       container.innerHTML = cats.map(c => `
-        <button onclick="renderMenuItems('${c}')" class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap bg-white border hover:bg-gray-100">
+        <button onclick="renderMenuItems('${c}')" class="px-2.5 py-1 rounded text-xs whitespace-nowrap bg-white border font-medium">
           ${c}
         </button>
       `).join('');
@@ -938,29 +821,23 @@
     function renderMenuItems(cat) {
       const container = document.getElementById('menu-items-grid');
       const filtered = menuItems.filter(m => cat === 'Tất cả' || m.category === cat);
-      container.innerHTML = filtered.map(m => {
-        const isOutOfStock = m.status === 'Tạm hết';
-        return `
-          <div class="border rounded-lg p-3 bg-white flex flex-col justify-between ${isOutOfStock ? 'opacity-40 pointer-events-none' : 'hover:border-amber-500 cursor-pointer'}" onclick="addItemToOrder(${m.id})">
-            <div>
-              <div class="flex justify-between items-start">
-                <h4 class="font-bold text-xs text-gray-900">${m.name}</h4>
-                <span class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">${m.kitchen}</span>
-              </div>
-              <p class="text-xs text-amber-600 font-bold mt-2">${m.price.toLocaleString('vi-VN')} ₫</p>
-            </div>
-            ${isOutOfStock ? '<span class="text-[10px] text-red-500 font-bold mt-1">Tạm hết</span>' : ''}
+      container.innerHTML = filtered.map(m => `
+        <div class="border rounded-lg p-2.5 bg-white flex flex-col justify-between ${m.status === 'Tạm hết' ? 'opacity-40 pointer-events-none' : 'cursor-pointer hover:border-amber-500'}" onclick="addItemToOrder(${m.id})">
+          <div>
+            <h4 class="font-bold text-xs">${m.name}</h4>
+            <span class="text-[9px] px-1 py-0.5 rounded bg-gray-100 text-gray-600">${m.kitchen}</span>
           </div>
-        `;
-      }).join('');
+          <p class="text-xs text-amber-600 font-bold mt-1">${m.price.toLocaleString('vi-VN')} ₫</p>
+        </div>
+      `).join('');
     }
 
     function renderOrderTicket() {
       const t = tables.find(x => x.id === activeTableId);
       const container = document.getElementById('order-ticket-items');
       container.innerHTML = '';
-
       let subtotal = 0;
+
       t.order.items.forEach((item, index) => {
         const m = menuItems.find(x => x.id === item.id);
         if (!m) return;
@@ -968,21 +845,18 @@
         subtotal += lineTotal;
 
         const row = document.createElement('div');
-        row.className = 'p-3 bg-white rounded-lg border space-y-2';
+        row.className = 'p-2 bg-white rounded border space-y-1';
         row.innerHTML = `
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="font-bold text-xs">${m.name}</div>
-              <div class="text-[10px] text-gray-500">${m.price.toLocaleString('vi-VN')} ₫ &bull; Trạm: <span class="font-semibold">${m.kitchen}</span></div>
-            </div>
-            <span class="text-xs font-bold">${lineTotal.toLocaleString('vi-VN')} ₫</span>
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-semibold">${m.name}</span>
+            <span class="font-bold">${lineTotal.toLocaleString('vi-VN')} ₫</span>
           </div>
-          <div class="flex justify-between items-center pt-1">
-            <input type="text" placeholder="Ghi chú..." value="${item.note}" onchange="updateItemNote(${index}, this.value)" class="text-[11px] border rounded px-2 py-1 w-7/12 bg-gray-50">
-            <div class="flex items-center gap-2">
-              <button onclick="updateQty(${index}, -1)" class="w-6 h-6 rounded bg-gray-200 text-xs font-bold">-</button>
+          <div class="flex justify-between items-center">
+            <input type="text" placeholder="Ghi chú..." value="${item.note}" onchange="updateItemNote(${index}, this.value)" class="text-[10px] border rounded px-1.5 py-0.5 w-6/12 bg-gray-50">
+            <div class="flex items-center gap-1.5">
+              <button onclick="updateQty(${index}, -1)" class="w-5 h-5 rounded bg-gray-200 text-xs font-bold">-</button>
               <span class="text-xs font-bold">${item.qty}</span>
-              <button onclick="updateQty(${index}, 1)" class="w-6 h-6 rounded bg-gray-200 text-xs font-bold">+</button>
+              <button onclick="updateQty(${index}, 1)" class="w-5 h-5 rounded bg-gray-200 text-xs font-bold">+</button>
             </div>
           </div>
         `;
@@ -996,20 +870,15 @@
     function addItemToOrder(menuId) {
       const t = tables.find(x => x.id === activeTableId);
       const existing = t.order.items.find(x => x.id === menuId);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        t.order.items.push({ id: menuId, qty: 1, note: '' });
-      }
+      if (existing) existing.qty += 1;
+      else t.order.items.push({ id: menuId, qty: 1, note: '' });
       renderOrderTicket();
     }
 
     function updateQty(index, change) {
       const t = tables.find(x => x.id === activeTableId);
       t.order.items[index].qty += change;
-      if (t.order.items[index].qty <= 0) {
-        t.order.items.splice(index, 1);
-      }
+      if (t.order.items[index].qty <= 0) t.order.items.splice(index, 1);
       renderOrderTicket();
     }
 
@@ -1021,29 +890,15 @@
 
     function sendOrderToKitchen() {
       const t = tables.find(x => x.id === activeTableId);
-      if (t.order.items.length === 0) {
-        alert('Order chưa có món nào!');
-        return;
-      }
+      if (t.order.items.length === 0) return alert('Chưa chọn món nào!');
       t.status = 'Đang phục vụ';
-
-      const routing = { 'Bếp nướng': [], 'Bếp nấu': [], 'Bartender': [] };
-      t.order.items.forEach(it => {
-        const m = menuItems.find(x => x.id === it.id);
-        if (m) routing[m.kitchen].push(`${m.name} x${it.qty} ${it.note ? `(${it.note})` : ''}`);
-      });
-
-      let summary = `ĐÃ GỬI BẾP CHO ${t.name} (${t.order.guests} khách):\n`;
-      for (const [k, items] of Object.entries(routing)) {
-        if (items.length > 0) summary += `\n[${k}]:\n - ` + items.join('\n - ');
-      }
-      alert(summary);
+      alert(`Đã gửi đơn bàn ${t.name} xuống các bếp chế biến!`);
       saveState();
       switchTab('dashboard');
     }
 
     function cancelActiveOrder() {
-      if (confirm('Hủy order này? Toàn bộ món sẽ bị xóa.')) {
+      if (confirm('Hủy order bàn này?')) {
         const t = tables.find(x => x.id === activeTableId);
         t.order = null;
         t.status = 'Trống';
@@ -1052,254 +907,23 @@
       }
     }
 
-    // 7. QUẢN LÝ BÀN & THIẾT KẾ
-    function toggleDesignMode() {
-      isDesignMode = !isDesignMode;
-      const statusText = document.getElementById('design-status-text');
-      const btn = document.getElementById('btn-toggle-design');
-      const tools = document.querySelectorAll('.design-tool');
-
-      if (isDesignMode) {
-        statusText.innerText = 'Bật';
-        statusText.className = 'text-emerald-600 font-bold';
-        btn.classList.add('border-emerald-600', 'bg-emerald-50');
-        tools.forEach(el => el.classList.remove('hidden'));
-      } else {
-        statusText.innerText = 'Tắt';
-        statusText.className = 'text-gray-500';
-        btn.classList.remove('border-emerald-600', 'bg-emerald-50');
-        tools.forEach(el => el.classList.add('hidden'));
-      }
-      renderZoneFilters();
-      renderTables();
+    // 7. MENU & TÀI KHOẢN
+    function renderMenuManagement() {
+      const tbody = document.getElementById('menu-mgmt-table');
+      tbody.innerHTML = menuItems.map(m => `
+        <tr class="hover:bg-gray-50">
+          <td class="p-2 font-medium">${m.name}</td>
+          <td class="p-2"><span class="text-[10px] bg-slate-100 p-1 rounded">${m.kitchen}</span></td>
+          <td class="p-2 font-bold">${m.price.toLocaleString('vi-VN')} ₫</td>
+          <td class="p-2 text-right">
+            <button onclick="toggleItemStock(${m.id})" class="text-[10px] px-2 py-1 rounded border">${m.status === 'Đang bán' ? 'Hết' : 'Bán lại'}</button>
+            <button onclick="deleteDish(${m.id})" class="text-[10px] px-2 py-1 rounded border text-red-500 ml-1">Xóa</button>
+          </td>
+        </tr>
+      `).join('');
     }
 
-    function renderZoneFilters() {
-      const container = document.getElementById('zone-filter-container');
-      container.innerHTML = '';
-
-      const allBtn = document.createElement('button');
-      allBtn.className = `px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 ${currentFilterZone === 'all' ? 'bg-gray-900 text-white' : 'bg-white border text-gray-700'}`;
-      allBtn.innerText = 'Tất cả';
-      allBtn.onclick = () => filterZone('all');
-      container.appendChild(allBtn);
-
-      zones.forEach(zone => {
-        const wrap = document.createElement('div');
-        wrap.className = 'flex items-center shrink-0';
-
-        const btn = document.createElement('button');
-        btn.className = `px-3 py-1.5 rounded-full text-xs font-semibold ${currentFilterZone === zone ? 'bg-gray-900 text-white' : 'bg-white border text-gray-700'} ${isDesignMode ? 'rounded-r-none' : ''}`;
-        btn.innerText = zone;
-        btn.onclick = () => filterZone(zone);
-        wrap.appendChild(btn);
-
-        if (isDesignMode) {
-          const delBtn = document.createElement('button');
-          delBtn.className = 'bg-red-50 border border-l-0 border-red-200 text-red-600 hover:bg-red-100 px-2 py-1.5 rounded-r-full text-xs';
-          delBtn.innerHTML = '&times;';
-          delBtn.onclick = (e) => {
-            e.stopPropagation();
-            deleteZone(zone);
-          };
-          wrap.appendChild(delBtn);
-        }
-        container.appendChild(wrap);
-      });
-    }
-
-    function filterZone(zone) {
-      currentFilterZone = zone;
-      renderZoneFilters();
-      renderTables();
-    }
-
-    function openAddAreaModal() {
-      document.getElementById('input-area-name').value = '';
-      document.getElementById('modal-add-area').classList.remove('hidden');
-    }
-
-    function saveNewArea() {
-      const name = document.getElementById('input-area-name').value.trim();
-      if (!name) return alert('Vui lòng nhập tên khu vực!');
-      if (zones.includes(name)) return alert('Khu vực này đã tồn tại!');
-      zones.push(name);
-      saveState();
-      closeModal('modal-add-area');
-      renderZoneFilters();
-    }
-
-    function deleteZone(zoneName) {
-      if (tables.some(t => t.zone === zoneName)) {
-        return alert(`Khu vực "${zoneName}" đang có bàn trực thuộc. Vui lòng chuyển hoặc xóa bàn trước!`);
-      }
-      if (confirm(`Bạn có chắc muốn xóa khu vực "${zoneName}"?`)) {
-        zones = zones.filter(z => z !== zoneName);
-        if (currentFilterZone === zoneName) currentFilterZone = 'all';
-        saveState();
-        renderZoneFilters();
-        renderTables();
-      }
-    }
-
-    function openAddTableModal() {
-      if (zones.length === 0) return alert('Chưa có khu vực nào. Hãy tạo khu vực trước!');
-      document.getElementById('table-modal-title').innerText = 'Thêm bàn mới';
-      document.getElementById('input-table-id').value = '';
-      document.getElementById('input-table-name').value = `Bàn 0${tables.length + 1}`;
-      document.getElementById('input-table-capacity').value = 4;
-      populateZoneDropdown();
-      document.getElementById('modal-table-form').classList.remove('hidden');
-    }
-
-    function openEditTableModal(tableId) {
-      const table = tables.find(t => t.id === tableId);
-      if (!table) return;
-      document.getElementById('table-modal-title').innerText = `Chỉnh sửa: ${table.name}`;
-      document.getElementById('input-table-id').value = table.id;
-      document.getElementById('input-table-name').value = table.name;
-      document.getElementById('input-table-capacity').value = table.capacity;
-      populateZoneDropdown(table.zone);
-      document.getElementById('modal-table-form').classList.remove('hidden');
-    }
-
-    function populateZoneDropdown(selectedZone = null) {
-      const select = document.getElementById('select-table-zone');
-      select.innerHTML = zones.map(z => `<option value="${z}" ${z === selectedZone ? 'selected' : ''}>${z}</option>`).join('');
-    }
-
-    function saveTableData() {
-      const idInput = document.getElementById('input-table-id').value;
-      const name = document.getElementById('input-table-name').value.trim();
-      const zone = document.getElementById('select-table-zone').value;
-      const capacity = parseInt(document.getElementById('input-table-capacity').value) || 4;
-
-      if (!name) return alert('Vui lòng điền tên bàn!');
-
-      if (idInput) {
-        const table = tables.find(t => t.id === parseInt(idInput));
-        table.name = name;
-        table.zone = zone;
-        table.capacity = capacity;
-      } else {
-        tables.push({ id: Date.now(), name, zone, capacity, status: 'Trống', order: null });
-      }
-
-      saveState();
-      closeModal('modal-table-form');
-      renderTables();
-    }
-
-    function deleteTable(tableId) {
-      const table = tables.find(t => t.id === tableId);
-      if (table.status !== 'Trống') return alert('Chỉ có thể xóa bàn đang ở trạng thái Trống!');
-      if (confirm(`Bạn chắc chắn muốn xóa "${table.name}"?`)) {
-        tables = tables.filter(t => t.id !== tableId);
-        saveState();
-        renderTables();
-      }
-    }
-
-    function renderTables() {
-      const grid = document.getElementById('table-grid');
-      grid.innerHTML = '';
-
-      const filtered = tables.filter(t => currentFilterZone === 'all' || t.zone === currentFilterZone);
-
-      if (filtered.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full py-12 text-center text-gray-400">
-            <i class="ph ph-squares-four text-4xl block mb-2"></i>
-            Chưa có bàn nào trong khu vực này.
-          </div>
-        `;
-        return;
-      }
-
-      filtered.forEach(t => {
-        let badgeClass = 'badge-empty';
-        if (t.status === 'Đã Order') badgeClass = 'badge-ordered';
-        if (t.status === 'Đang phục vụ') badgeClass = 'badge-serving';
-        if (t.status === 'Chờ thanh toán') badgeClass = 'badge-billing';
-
-        let totalAmount = 0;
-        let guestCountDisplay = `${t.capacity} chỗ`;
-        if (t.order) {
-          guestCountDisplay = `${t.order.guests || 2} khách (tối đa ${t.capacity})`;
-          totalAmount = t.order.items.reduce((sum, it) => {
-            const m = menuItems.find(m => m.id === it.id);
-            return sum + (m ? m.price * it.qty : 0);
-          }, 0);
-        }
-
-        const card = document.createElement('div');
-        card.className = `p-4 rounded-xl border bg-white shadow-sm flex flex-col justify-between transition-all ${
-          isDesignMode ? 'border-dashed border-gray-400 ring-2 ring-indigo-50' : 'hover:shadow-md cursor-pointer'
-        }`;
-
-        if (!isDesignMode) card.onclick = () => handleTableClick(t.id);
-
-        card.innerHTML = `
-          <div>
-            <div class="flex justify-between items-start mb-1">
-              <span class="font-bold text-base text-gray-800">${t.name}</span>
-              <span class="text-xs px-2 py-0.5 rounded-full border ${badgeClass} font-medium">${t.status}</span>
-            </div>
-            <div class="text-xs text-gray-500 mb-2">
-              <i class="ph ph-users"></i> ${guestCountDisplay} &bull; <span class="text-indigo-600 font-semibold">${t.zone}</span>
-            </div>
-          </div>
-          ${isDesignMode ? `
-            <div class="pt-3 border-t flex justify-end gap-1.5 mt-2">
-              <button onclick="openEditTableModal(${t.id})" class="px-2.5 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium">Sửa</button>
-              <button onclick="deleteTable(${t.id})" class="px-2.5 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 rounded font-medium">Xóa</button>
-            </div>
-          ` : `
-            <div class="pt-3 border-t flex justify-between items-center">
-              <span class="text-xs font-semibold text-gray-500">${t.order ? t.order.startTime : '--:--'}</span>
-              <span class="text-sm font-bold text-gray-900">${totalAmount.toLocaleString('vi-VN')} ₫</span>
-            </div>
-          `}
-        `;
-        grid.appendChild(card);
-      });
-    }
-
-    // 8. CHUYỂN BÀN
-    function openMoveTableModal() {
-      const select = document.getElementById('select-destination-table');
-      select.innerHTML = '';
-      const emptyTables = tables.filter(x => x.status === 'Trống' && x.id !== activeTableId);
-      if (emptyTables.length === 0) return alert('Hiện không còn bàn nào trống để chuyển!');
-      emptyTables.forEach(x => {
-        select.innerHTML += `<option value="${x.id}">${x.name} (${x.zone})</option>`;
-      });
-      document.getElementById('modal-move-table').classList.remove('hidden');
-    }
-
-    function confirmMoveTable() {
-      const targetId = parseInt(document.getElementById('select-destination-table').value);
-      const sourceTable = tables.find(x => x.id === activeTableId);
-      const targetTable = tables.find(x => x.id === targetId);
-
-      targetTable.order = sourceTable.order;
-      targetTable.status = sourceTable.status;
-      sourceTable.order = null;
-      sourceTable.status = 'Trống';
-
-      saveState();
-      closeModal('modal-move-table');
-      alert(`Đã chuyển order từ ${sourceTable.name} sang ${targetTable.name}`);
-      switchTab('dashboard');
-    }
-
-    // 9. QUẢN LÝ THỰC ĐƠN
     function openAddDishModal() {
-      document.getElementById('input-dish-name').value = '';
-      document.getElementById('input-dish-category').value = '';
-      document.getElementById('input-dish-price').value = '';
-      const categories = [...new Set(menuItems.map(m => m.category))];
-      document.getElementById('category-datalist').innerHTML = categories.map(c => `<option value="${c}"></option>`).join('');
       document.getElementById('modal-add-dish').classList.remove('hidden');
     }
 
@@ -1309,52 +933,181 @@
       const kitchen = document.getElementById('select-dish-kitchen').value;
       const price = parseInt(document.getElementById('input-dish-price').value);
 
-      if (!name) return alert('Vui lòng nhập tên món ăn!');
-      if (isNaN(price) || price < 0) return alert('Vui lòng nhập giá hợp lệ!');
-
+      if (!name || isNaN(price)) return alert('Điền đủ thông tin món!');
       menuItems.push({ id: Date.now(), name, category, kitchen, price, status: 'Đang bán' });
       saveState();
       closeModal('modal-add-dish');
       renderMenuManagement();
     }
 
-    function deleteDish(dishId) {
-      if (confirm('Bạn có chắc chắn muốn xóa món này khỏi menu?')) {
-        menuItems = menuItems.filter(m => m.id !== dishId);
+    function deleteDish(id) {
+      if (confirm('Xóa món này?')) {
+        menuItems = menuItems.filter(x => x.id !== id);
         saveState();
         renderMenuManagement();
       }
     }
 
-    function renderMenuManagement() {
-      const tbody = document.getElementById('menu-mgmt-table');
-      tbody.innerHTML = menuItems.map(m => `
+    function toggleItemStock(id) {
+      const it = menuItems.find(x => x.id === id);
+      it.status = it.status === 'Đang bán' ? 'Tạm hết' : 'Đang bán';
+      saveState();
+      renderMenuManagement();
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = users.map(u => `
         <tr class="hover:bg-gray-50">
-          <td class="p-3 font-semibold">${m.name}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700">${m.category}</span></td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">${m.kitchen}</span></td>
-          <td class="p-3 font-bold text-gray-900">${m.price.toLocaleString('vi-VN')} ₫</td>
-          <td class="p-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.status === 'Đang bán' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}">${m.status}</span>
-          </td>
-          <td class="p-3 text-right space-x-1">
-            <button onclick="toggleItemStock(${m.id})" class="text-xs px-2.5 py-1 rounded border hover:bg-gray-100">
-              ${m.status === 'Đang bán' ? 'Báo hết' : 'Mở bán'}
-            </button>
-            <button onclick="deleteDish(${m.id})" class="text-xs px-2.5 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50">Xóa</button>
+          <td class="p-2 font-medium">${u.fullname}</td>
+          <td class="p-2 font-mono">${u.username}</td>
+          <td class="p-2"><span class="text-[10px] bg-gray-100 p-1 rounded font-bold">${u.role}</span></td>
+          <td class="p-2 text-right">
+            ${u.username !== 'admin' ? `<button onclick="deleteUser(${u.id})" class="text-[10px] text-red-600 border px-1.5 py-0.5 rounded">Xóa</button>` : ''}
           </td>
         </tr>
       `).join('');
     }
 
-    function toggleItemStock(id) {
-      const item = menuItems.find(m => m.id === id);
-      item.status = item.status === 'Đang bán' ? 'Tạm hết' : 'Đang bán';
-      saveState();
-      renderMenuManagement();
+    function openAddUserModal() {
+      document.getElementById('modal-add-user').classList.remove('hidden');
     }
 
-    // 10. TIỆN ÍCH CHUYỂN TAB & MODAL
+    function saveNewUser() {
+      const fullname = document.getElementById('input-new-user-fullname').value.trim();
+      const username = document.getElementById('input-new-user-username').value.trim();
+      const password = document.getElementById('input-new-user-password').value.trim();
+      const role = document.getElementById('select-new-user-role').value;
+
+      if (!fullname || !username || !password) return alert('Vui lòng nhập đủ thông tin!');
+      users.push({ id: Date.now(), fullname, username, password, role, status: 'Hoạt động' });
+      saveState();
+      closeModal('modal-add-user');
+      renderUsersTable();
+    }
+
+    function deleteUser(id) {
+      if (confirm('Xóa tài khoản này?')) {
+        users = users.filter(x => x.id !== id);
+        saveState();
+        renderUsersTable();
+      }
+    }
+
+    // 8. BÀN & SƠ ĐỒ
+    function toggleDesignMode() {
+      isDesignMode = !isDesignMode;
+      document.getElementById('design-status-text').innerText = isDesignMode ? 'Bật' : 'Tắt';
+      document.querySelectorAll('.design-tool').forEach(el => el.classList.toggle('hidden', !isDesignMode));
+      renderZoneFilters();
+      renderTables();
+    }
+
+    function renderZoneFilters() {
+      const container = document.getElementById('zone-filter-container');
+      container.innerHTML = `<button onclick="filterZone('all')" class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 ${currentFilterZone === 'all' ? 'bg-gray-900 text-white' : 'bg-white border text-gray-700'}">Tất cả</button>`;
+      zones.forEach(zone => {
+        container.innerHTML += `<button onclick="filterZone('${zone}')" class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 ${currentFilterZone === zone ? 'bg-gray-900 text-white' : 'bg-white border text-gray-700'}">${zone}</button>`;
+      });
+    }
+
+    function filterZone(z) {
+      currentFilterZone = z;
+      renderZoneFilters();
+      renderTables();
+    }
+
+    function renderTables() {
+      const grid = document.getElementById('table-grid');
+      grid.innerHTML = '';
+      const filtered = tables.filter(t => currentFilterZone === 'all' || t.zone === currentFilterZone);
+
+      filtered.forEach(t => {
+        let badgeClass = 'badge-empty';
+        if (t.status === 'Đã Order') badgeClass = 'badge-ordered';
+        if (t.status === 'Đang phục vụ') badgeClass = 'badge-serving';
+        if (t.status === 'Chờ thanh toán') badgeClass = 'badge-billing';
+
+        let totalAmount = 0;
+        if (t.order) {
+          totalAmount = t.order.items.reduce((sum, it) => {
+            const m = menuItems.find(m => m.id === it.id);
+            return sum + (m ? m.price * it.qty : 0);
+          }, 0);
+        }
+
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-xl border bg-white shadow-sm flex flex-col justify-between ${isDesignMode ? 'border-dashed border-gray-400' : 'cursor-pointer hover:shadow-md'}`;
+        if (!isDesignMode) card.onclick = () => handleTableClick(t.id);
+
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-1">
+              <span class="font-bold text-sm text-gray-800">${t.name}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full border ${badgeClass} font-semibold">${t.status}</span>
+            </div>
+            <div class="text-[11px] text-gray-500 mb-2">
+              ${t.order ? `${t.order.guests} khách` : `${t.capacity} chỗ`} &bull; ${t.zone}
+            </div>
+          </div>
+          <div class="pt-2 border-t flex justify-between items-center text-xs font-bold">
+            <span class="text-gray-400 font-normal">${t.order ? t.order.startTime : '--:--'}</span>
+            <span class="text-gray-900">${totalAmount.toLocaleString('vi-VN')} ₫</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openAddAreaModal() { document.getElementById('modal-add-area').classList.remove('hidden'); }
+    function saveNewArea() {
+      const name = document.getElementById('input-area-name').value.trim();
+      if (!name) return alert('Nhập tên khu vực!');
+      zones.push(name);
+      saveState();
+      closeModal('modal-add-area');
+      renderZoneFilters();
+    }
+
+    function openAddTableModal() {
+      document.getElementById('select-table-zone').innerHTML = zones.map(z => `<option value="${z}">${z}</option>`).join('');
+      document.getElementById('modal-table-form').classList.remove('hidden');
+    }
+
+    function saveTableData() {
+      const name = document.getElementById('input-table-name').value.trim();
+      const zone = document.getElementById('select-table-zone').value;
+      const capacity = parseInt(document.getElementById('input-table-capacity').value) || 4;
+      if (!name) return alert('Nhập tên bàn!');
+      tables.push({ id: Date.now(), name, zone, capacity, status: 'Trống', order: null });
+      saveState();
+      closeModal('modal-table-form');
+      renderTables();
+    }
+
+    function openMoveTableModal() {
+      const select = document.getElementById('select-destination-table');
+      const emptyTables = tables.filter(x => x.status === 'Trống' && x.id !== activeTableId);
+      if (emptyTables.length === 0) return alert('Không có bàn trống!');
+      select.innerHTML = emptyTables.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+      document.getElementById('modal-move-table').classList.remove('hidden');
+    }
+
+    function confirmMoveTable() {
+      const targetId = parseInt(document.getElementById('select-destination-table').value);
+      const src = tables.find(x => x.id === activeTableId);
+      const dest = tables.find(x => x.id === targetId);
+      dest.order = src.order;
+      dest.status = src.status;
+      src.order = null;
+      src.status = 'Trống';
+      saveState();
+      closeModal('modal-move-table');
+      alert(`Đã chuyển order sang ${dest.name}`);
+      switchTab('dashboard');
+    }
+
+    // 9. CHUYỂN TAB & MODAL
     function switchTab(tabId) {
       ['dashboard', 'order', 'reports', 'menu-mgmt', 'settings'].forEach(id => {
         const el = document.getElementById(`tab-${id}`);
