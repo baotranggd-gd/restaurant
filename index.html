@@ -50,7 +50,7 @@
       </nav>
     </div>
     <div class="p-4 border-t border-slate-800 text-xs text-gray-500">
-      Restaurant POS v2.1 &bull; 2026
+      Restaurant POS v2.2 &bull; 2026
     </div>
   </aside>
 
@@ -144,7 +144,7 @@
       </div>
     </section>
 
-    <!-- MÀN HÌNH 3: BÁO CÁO DOANH THU (ĐÃ BỎ TIPS) -->
+    <!-- MÀN HÌNH 3: BÁO CÁO DOANH THU -->
     <section id="tab-reports" class="hidden p-6">
       <h2 class="text-2xl font-bold mb-4">Báo cáo hoạt động kinh doanh</h2>
       <div class="grid grid-cols-3 gap-4 mb-6">
@@ -179,14 +179,20 @@
       </div>
     </section>
 
-    <!-- MÀN HÌNH 4: QUẢN LÝ MENU -->
+    <!-- MÀN HÌNH 4: QUẢN LÝ MENU (THÊM / XÓA MÓN) -->
     <section id="tab-menu-mgmt" class="hidden p-6">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold">Quản lý thực đơn</h2>
+        <div>
+          <h2 class="text-2xl font-bold">Quản lý thực đơn</h2>
+          <p class="text-sm text-gray-500">Tạo món mới, phân chia trạm bếp phụ trách và cập nhật trạng thái kho</p>
+        </div>
+        <button onclick="openAddDishModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 shadow-sm">
+          <i class="ph ph-plus-circle font-bold text-base"></i> Thêm món mới
+        </button>
       </div>
-      <div class="bg-white border rounded-xl overflow-hidden">
+      <div class="bg-white border rounded-xl overflow-hidden shadow-sm">
         <table class="w-full text-left text-xs">
-          <thead class="bg-gray-50 border-b">
+          <thead class="bg-gray-50 border-b text-gray-700">
             <tr>
               <th class="p-3">Tên món</th>
               <th class="p-3">Nhóm món</th>
@@ -196,7 +202,7 @@
               <th class="p-3 text-right">Thao tác</th>
             </tr>
           </thead>
-          <tbody id="menu-mgmt-table" class="divide-y"></tbody>
+          <tbody id="menu-mgmt-table" class="divide-y text-gray-700"></tbody>
         </table>
       </div>
     </section>
@@ -219,7 +225,7 @@
             <tr><td class="p-3 font-medium">Tạo & Gọi món (Order)</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-emerald-600 font-bold">✓</td></tr>
             <tr><td class="p-3 font-medium">Thiết kế, thêm, xóa bàn & khu vực</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-gray-300">—</td></tr>
             <tr><td class="p-3 font-medium">Hủy Order / Hủy món đã gửi</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-gray-300">—</td></tr>
-            <tr><td class="p-3 font-medium">Quản lý Menu & Tạm hết món</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-gray-300">—</td></tr>
+            <tr><td class="p-3 font-medium">Quản lý Menu (Thêm, xóa món & hết hàng)</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-gray-300">—</td></tr>
             <tr><td class="p-3 font-medium">Xem báo cáo doanh thu & Export</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-gray-300">—</td></tr>
             <tr><td class="p-3 font-medium">Quản lý tài khoản & Phân quyền</td><td class="text-center text-emerald-600 font-bold">✓</td><td class="text-center text-gray-300">—</td><td class="text-center text-gray-300">—</td></tr>
           </tbody>
@@ -228,6 +234,45 @@
     </section>
 
   </main>
+
+  <!-- MODAL: THÊM MÓN ĂN MỚI VÀO MENU -->
+  <div id="modal-add-dish" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-md w-full p-5 space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-base text-gray-900">Thêm món ăn mới vào thực đơn</h3>
+        <button onclick="closeModal('modal-add-dish')" class="text-gray-400 hover:text-gray-600">&times;</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs text-gray-600 block mb-1">Tên món ăn / thức uống:</label>
+          <input type="text" id="input-dish-name" placeholder="Ví dụ: Cơm Chiên Hải Sản" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-gray-600 block mb-1">Nhóm món:</label>
+            <input type="text" id="input-dish-category" list="category-datalist" placeholder="Chọn hoặc gõ nhóm mới" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <datalist id="category-datalist"></datalist>
+          </div>
+          <div>
+            <label class="text-xs text-gray-600 block mb-1">Trạm bếp chế biến:</label>
+            <select id="select-dish-kitchen" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <option value="Bếp nấu">Bếp nấu</option>
+              <option value="Bếp nướng">Bếp nướng</option>
+              <option value="Bartender">Bartender</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600 block mb-1">Đơn giá bán (VNĐ):</label>
+          <input type="number" id="input-dish-price" placeholder="Ví dụ: 85000" min="0" step="1000" class="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t">
+        <button onclick="closeModal('modal-add-dish')" class="px-3 py-1.5 text-xs border rounded-lg">Hủy</button>
+        <button onclick="saveNewDish()" class="px-4 py-2 text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg font-bold">Lưu vào thực đơn</button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: CHỌN SỐ LƯỢNG KHÁCH TRƯỚC KHI TẠO ORDER -->
   <div id="modal-select-guests" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
@@ -300,7 +345,7 @@
     </div>
   </div>
 
-  <!-- MODAL THANH TOÁN (CHECKOUT - ĐÃ BỎ TIPS HOÀN TOÀN) -->
+  <!-- MODAL THANH TOÁN -->
   <div id="modal-checkout" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
@@ -357,7 +402,7 @@
 
   <!-- JAVASCRIPT CORE LOGIC -->
   <script>
-    // 1. DATA STATE & STORAGE INITIALIZATION
+    // 1. DATA STATE & STORAGE
     let currentRole = 'Admin';
     let isDesignMode = false;
     let currentFilterZone = 'all';
@@ -374,10 +419,7 @@
       { id: 6, name: 'Phòng VIP 1', zone: 'VIP', capacity: 10, status: 'Trống', order: null }
     ];
 
-    let zones = JSON.parse(localStorage.getItem('restaurant_zones')) || defaultZones;
-    let tables = JSON.parse(localStorage.getItem('restaurant_tables')) || defaultTables;
-
-    const menuItems = [
+    const defaultMenu = [
       { id: 1, name: 'Bò Wagyu Nướng Sốt Tiêu', category: 'Nướng', kitchen: 'Bếp nướng', price: 320000, status: 'Đang bán' },
       { id: 2, name: 'Sườn Heo Nướng BBQ', category: 'Nướng', kitchen: 'Bếp nướng', price: 185000, status: 'Đang bán' },
       { id: 3, name: 'Pasta Sốt Bò Băm Bolognese', category: 'Món chính', kitchen: 'Bếp nấu', price: 120000, status: 'Đang bán' },
@@ -388,11 +430,15 @@
       { id: 8, name: 'Panna Cotta Dâu Rừng', category: 'Dessert', kitchen: 'Bếp nấu', price: 55000, status: 'Đang bán' }
     ];
 
+    let zones = JSON.parse(localStorage.getItem('restaurant_zones')) || defaultZones;
+    let tables = JSON.parse(localStorage.getItem('restaurant_tables')) || defaultTables;
+    let menuItems = JSON.parse(localStorage.getItem('restaurant_menu')) || defaultMenu;
     let orderHistory = [];
 
     function saveState() {
       localStorage.setItem('restaurant_zones', JSON.stringify(zones));
       localStorage.setItem('restaurant_tables', JSON.stringify(tables));
+      localStorage.setItem('restaurant_menu', JSON.stringify(menuItems));
     }
 
     // 2. LIFECYCLE
@@ -411,6 +457,7 @@
       });
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
       if (tabId === 'dashboard') renderTables();
+      if (tabId === 'menu-mgmt') renderMenuManagement();
     }
 
     function changeRole(role) {
@@ -433,7 +480,95 @@
       });
     }
 
-    // 3. THIẾT KẾ BÀN & KHU VỰC
+    // 3. QUẢN LÝ MENU (THÊM, XÓA, BẬT/TẮT HẾT HÀNG)
+    function openAddDishModal() {
+      document.getElementById('input-dish-name').value = '';
+      document.getElementById('input-dish-category').value = '';
+      document.getElementById('input-dish-price').value = '';
+      
+      // Cung cấp gợi ý danh mục đã có
+      const categories = [...new Set(menuItems.map(m => m.category))];
+      const datalist = document.getElementById('category-datalist');
+      datalist.innerHTML = categories.map(c => `<option value="${c}"></option>`).join('');
+
+      document.getElementById('modal-add-dish').classList.remove('hidden');
+    }
+
+    function saveNewDish() {
+      const name = document.getElementById('input-dish-name').value.trim();
+      const category = document.getElementById('input-dish-category').value.trim() || 'Món khác';
+      const kitchen = document.getElementById('select-dish-kitchen').value;
+      const price = parseInt(document.getElementById('input-dish-price').value);
+
+      if (!name) {
+        alert('Vui lòng nhập tên món ăn!');
+        return;
+      }
+      if (isNaN(price) || price < 0) {
+        alert('Vui lòng nhập đơn giá hợp lệ!');
+        return;
+      }
+
+      const newDish = {
+        id: Date.now(),
+        name: name,
+        category: category,
+        kitchen: kitchen,
+        price: price,
+        status: 'Đang bán'
+      };
+
+      menuItems.push(newDish);
+      saveState();
+      closeModal('modal-add-dish');
+      renderMenuManagement();
+      alert(`Đã thêm món "${name}" vào thực đơn thành công!`);
+    }
+
+    function deleteDish(dishId) {
+      const dish = menuItems.find(m => m.id === dishId);
+      if (!dish) return;
+
+      if (confirm(`Bạn có chắc chắn muốn xóa "${dish.name}" khỏi thực đơn không?`)) {
+        menuItems = menuItems.filter(m => m.id !== dishId);
+        saveState();
+        renderMenuManagement();
+      }
+    }
+
+    function renderMenuManagement() {
+      const tbody = document.getElementById('menu-mgmt-table');
+      tbody.innerHTML = menuItems.map(m => `
+        <tr class="hover:bg-gray-50">
+          <td class="p-3 font-semibold">${m.name}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-medium">${m.category}</span></td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">${m.kitchen}</span></td>
+          <td class="p-3 font-bold text-gray-900">${m.price.toLocaleString('vi-VN')} ₫</td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.status === 'Đang bán' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}">
+              ${m.status}
+            </span>
+          </td>
+          <td class="p-3 text-right space-x-1">
+            <button onclick="toggleItemStock(${m.id})" class="text-xs px-2.5 py-1 rounded border hover:bg-gray-100 font-medium">
+              ${m.status === 'Đang bán' ? 'Báo hết' : 'Mở bán'}
+            </button>
+            <button onclick="deleteDish(${m.id})" class="text-xs px-2.5 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 font-medium">
+              <i class="ph ph-trash"></i> Xóa
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function toggleItemStock(id) {
+      const item = menuItems.find(m => m.id === id);
+      item.status = item.status === 'Đang bán' ? 'Tạm hết' : 'Đang bán';
+      saveState();
+      renderMenuManagement();
+    }
+
+    // 4. THIẾT KẾ BÀN & KHU VỰC
     function toggleDesignMode() {
       isDesignMode = !isDesignMode;
       const statusText = document.getElementById('design-status-text');
@@ -609,7 +744,7 @@
       }
     }
 
-    // 4. RENDER GRID BÀN
+    // 5. RENDER GRID BÀN
     function renderTables() {
       const grid = document.getElementById('table-grid');
       grid.innerHTML = '';
@@ -686,17 +821,15 @@
       });
     }
 
-    // 5. FLOW TẠO ORDER BẮT BUỘC CHỌN SỐ KHÁCH
+    // 6. ORDER WORKFLOW
     function handleTableClick(tableId) {
       const t = tables.find(x => x.id === tableId);
       if (!t.order) {
-        // Bàn trống: Bắt buộc mở modal chọn số khách
         pendingCreateOrderTableId = tableId;
         document.getElementById('guest-modal-table-title').innerText = `Mở ${t.name} - Nhập số khách`;
         document.getElementById('input-guest-count').value = Math.min(2, t.capacity);
         document.getElementById('modal-select-guests').classList.remove('hidden');
       } else {
-        // Bàn đã có order: Vào trực tiếp màn hình xử lý order
         openTableOrder(tableId);
       }
     }
@@ -740,7 +873,7 @@
     }
 
     function renderMenuCategories() {
-      const cats = ['Tất cả', 'Khai vị', 'Món chính', 'Nướng', 'Đồ uống', 'Dessert'];
+      const cats = ['Tất cả', ...new Set(menuItems.map(m => m.category))];
       const container = document.getElementById('menu-categories');
       container.innerHTML = cats.map(c => `
         <button onclick="renderMenuItems('${c}')" class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap bg-white border hover:bg-gray-100">
@@ -777,6 +910,7 @@
       let subtotal = 0;
       t.order.items.forEach((item, index) => {
         const m = menuItems.find(x => x.id === item.id);
+        if (!m) return;
         const lineTotal = m.price * item.qty;
         subtotal += lineTotal;
 
@@ -791,7 +925,7 @@
             <span class="text-xs font-bold">${lineTotal.toLocaleString('vi-VN')} ₫</span>
           </div>
           <div class="flex justify-between items-center pt-1">
-            <input type="text" placeholder="Ghi chú (ít cay, không đá...)" value="${item.note}" onchange="updateItemNote(${index}, this.value)" class="text-[11px] border rounded px-2 py-1 w-7/12 bg-gray-50">
+            <input type="text" placeholder="Ghi chú..." value="${item.note}" onchange="updateItemNote(${index}, this.value)" class="text-[11px] border rounded px-2 py-1 w-7/12 bg-gray-50">
             <div class="flex items-center gap-2">
               <button onclick="updateQty(${index}, -1)" class="w-6 h-6 rounded bg-gray-200 text-xs font-bold">-</button>
               <span class="text-xs font-bold">${item.qty}</span>
@@ -843,7 +977,7 @@
       const routing = { 'Bếp nướng': [], 'Bếp nấu': [], 'Bartender': [] };
       t.order.items.forEach(it => {
         const m = menuItems.find(x => x.id === it.id);
-        routing[m.kitchen].push(`${m.name} x${it.qty} ${it.note ? `(${it.note})` : ''}`);
+        if (m) routing[m.kitchen].push(`${m.name} x${it.qty} ${it.note ? `(${it.note})` : ''}`);
       });
 
       let summary = `ĐÃ GỬI BẾP CHO ${t.name} (${t.order.guests} khách):\n`;
@@ -855,7 +989,7 @@
       switchTab('dashboard');
     }
 
-    // 6. CHUYỂN BÀN
+    // 7. CHUYỂN BÀN
     function openMoveTableModal() {
       const select = document.getElementById('select-destination-table');
       select.innerHTML = '';
@@ -887,7 +1021,7 @@
       switchTab('dashboard');
     }
 
-    // 7. THANH TOÁN (HOÀN TOÀN BỎ TIPS)
+    // 8. THANH TOÁN
     function openCheckoutModal() {
       const t = tables.find(x => x.id === activeTableId);
       if (!t.order || t.order.items.length === 0) {
@@ -898,7 +1032,7 @@
 
       const total = t.order.items.reduce((sum, it) => {
         const m = menuItems.find(x => x.id === it.id);
-        return sum + (m.price * it.qty);
+        return sum + (m ? m.price * it.qty : 0);
       }, 0);
 
       document.getElementById('checkout-table-info').innerText = `${t.name} (${t.zone})`;
@@ -912,7 +1046,7 @@
       const t = tables.find(x => x.id === activeTableId);
       const total = t.order.items.reduce((sum, it) => {
         const m = menuItems.find(x => x.id === it.id);
-        return sum + (m.price * it.qty);
+        return sum + (m ? m.price * it.qty : 0);
       }, 0);
       const method = document.querySelector('input[name="payment_method"]:checked').value;
 
@@ -945,7 +1079,7 @@
       }
     }
 
-    // 8. BÁO CÁO (ĐÃ BỎ TIPS)
+    // 9. BÁO CÁO
     function updateReports() {
       const totalRev = orderHistory.reduce((sum, o) => sum + o.total, 0);
       const totalOrders = orderHistory.length;
@@ -966,35 +1100,6 @@
           <td class="p-2.5 text-right font-bold text-gray-900">${o.total.toLocaleString('vi-VN')} ₫</td>
         </tr>
       `).join('');
-    }
-
-    // 9. MENU MANAGEMENT
-    function renderMenuManagement() {
-      const tbody = document.getElementById('menu-mgmt-table');
-      tbody.innerHTML = menuItems.map(m => `
-        <tr>
-          <td class="p-3 font-semibold">${m.name}</td>
-          <td class="p-3">${m.category}</td>
-          <td class="p-3">${m.kitchen}</td>
-          <td class="p-3 font-medium">${m.price.toLocaleString('vi-VN')} ₫</td>
-          <td class="p-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.status === 'Đang bán' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}">
-              ${m.status}
-            </span>
-          </td>
-          <td class="p-3 text-right">
-            <button onclick="toggleItemStock(${m.id})" class="text-xs px-2 py-1 rounded border hover:bg-gray-100">
-              ${m.status === 'Đang bán' ? 'Đánh dấu Tạm hết' : 'Mở bán lại'}
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    function toggleItemStock(id) {
-      const item = menuItems.find(m => m.id === id);
-      item.status = item.status === 'Đang bán' ? 'Tạm hết' : 'Đang bán';
-      renderMenuManagement();
     }
 
     function closeModal(id) {
